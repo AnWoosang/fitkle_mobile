@@ -241,11 +241,15 @@ class EventCard extends StatelessWidget {
       children: [
         const Icon(Icons.location_on, size: 12, color: AppTheme.mutedForeground),
         const SizedBox(width: 4),
-        Text(
-          event.eventType.value == 'ONLINE' ? 'Online' : event.address,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppTheme.mutedForeground,
+        Expanded(
+          child: Text(
+            event.eventType.value == 'ONLINE' ? 'Online' : event.address,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppTheme.mutedForeground,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
@@ -386,7 +390,6 @@ class EventCard extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
               Icons.location_on,
@@ -394,11 +397,15 @@ class EventCard extends StatelessWidget {
               color: AppTheme.primary,
             ),
             const SizedBox(width: 6),
-            Text(
-              event.eventType.value == 'ONLINE' ? 'Online' : event.address,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppTheme.mutedForeground,
+            Expanded(
+              child: Text(
+                event.eventType.value == 'ONLINE' ? 'Online' : event.address,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.mutedForeground,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
