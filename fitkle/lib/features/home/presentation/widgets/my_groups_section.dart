@@ -93,7 +93,7 @@ class _MyGroupsSectionState extends ConsumerState<MyGroupsSection> {
 
   Widget _buildGroupsList(BuildContext context, List<GroupEntity> groups) {
     return SizedBox(
-      height: 254, // GroupCard small 높이 + 여유
+      height: 255, // GroupCard small 높이 255 + 여유
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: groups.length,

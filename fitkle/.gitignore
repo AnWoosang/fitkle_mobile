@@ -17,6 +17,9 @@ migrate_working_dir/
 .env.local
 .env.*.local
 
+# MCP configuration (contains sensitive tokens)
+../.mcp.json
+
 # IntelliJ related
 *.iml
 *.ipr

@@ -102,7 +102,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
 
             // nationality에서 flag emoji와 이름 가져오기
             final countryFlag = member.nationality.flag;
-            final countryName = member.nationality.name;
+            final countryName = member.nationality.nameEn;
 
             // member 데이터를 profile Map으로 변환
             final profile = {
@@ -111,6 +111,8 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               'location': member.location,
               'nationality': countryFlag,
               'nationalityFull': countryName,
+              'nationalityEnum': member.nationality,
+              'gender': member.gender?.nameEn,
               'bio': member.bio ?? '',
               'attendanceRate': 95, // TODO: 실제 출석률 계산
               'totalRSVPs': member.totalRsvps,

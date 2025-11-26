@@ -52,24 +52,25 @@ class _MyProfileGroupsSectionState extends State<MyProfileGroupsSection> {
               child: Row(
                 children: [
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
                       color: AppTheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Icon(
                       Icons.people,
-                      size: 20,
+                      size: 16,
                       color: AppTheme.primary,
                     ),
                   ),
                   const SizedBox(width: 12),
                   const Expanded(
                     child: Text(
-                      '내 그룹',
+                      'My Groups',
                       style: TextStyle(
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16
                       ),
                     ),
                   ),
@@ -115,7 +116,7 @@ class _MyProfileGroupsSectionState extends State<MyProfileGroupsSection> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: SizedBox(
-                  height: 660, // 그룹 카드 2개 높이 (각 320px + 간격 20px)
+                  height: 255, // 그룹 카드 높이
                   child: PageView.builder(
                     controller: _pageController,
                     onPageChanged: (index) {
@@ -129,22 +130,30 @@ class _MyProfileGroupsSectionState extends State<MyProfileGroupsSection> {
                       final endIndex = (startIndex + 2).clamp(0, widget.groups.length);
                       final pageGroups = widget.groups.sublist(startIndex, endIndex);
 
-                      return Column(
-                        children: pageGroups.map((group) =>
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 20),
-                            child: GroupCard(
-                              group: group,
-                              size: GroupCardSize.small,
-                            ),
-                          ),
-                        ).toList(),
+                      return Row(
+                        children: [
+                          ...pageGroups.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final group = entry.value;
+                            return Expanded(
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                  right: index == 0 && pageGroups.length > 1 ? 12 : 0,
+                                ),
+                                child: GroupCard(
+                                  group: group,
+                                  size: GroupCardSize.small,
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
                       );
                     },
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               // Page Indicator
               if ((widget.groups.length / 2).ceil() > 1)
                 Padding(

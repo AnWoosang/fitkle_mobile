@@ -48,19 +48,22 @@ class MyProfileAboutSection extends StatelessWidget {
                 const Text(
                   'About me',
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
             Text(
-              bio,
-              style: const TextStyle(
+              bio.isEmpty ? 'No bio yet.' : bio,
+              style: TextStyle(
                 fontSize: 14,
-                color: AppTheme.mutedForeground,
+                color: bio.isEmpty
+                    ? AppTheme.mutedForeground.withValues(alpha: 0.6)
+                    : AppTheme.mutedForeground,
                 height: 1.5,
+                fontStyle: bio.isEmpty ? FontStyle.italic : FontStyle.normal,
               ),
             ),
           ],

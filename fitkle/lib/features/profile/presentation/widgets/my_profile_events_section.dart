@@ -52,24 +52,25 @@ class _MyProfileEventsSectionState extends State<MyProfileEventsSection> {
               child: Row(
                 children: [
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
                       color: AppTheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Icon(
                       Icons.event,
-                      size: 20,
+                      size: 16,
                       color: AppTheme.primary,
                     ),
                   ),
                   const SizedBox(width: 12),
                   const Expanded(
                     child: Text(
-                      '내 이벤트',
+                      'My Events',
                       style: TextStyle(
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16
                       ),
                     ),
                   ),
@@ -115,7 +116,7 @@ class _MyProfileEventsSectionState extends State<MyProfileEventsSection> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: SizedBox(
-                  height: 420, // 이벤트 카드 2개 높이 (각 200px + 간격 20px)
+                  height: 244, // 이벤트 카드 2개 높이 (각 104px + 간격 12px)
                   child: PageView.builder(
                     controller: _pageController,
                     onPageChanged: (index) {

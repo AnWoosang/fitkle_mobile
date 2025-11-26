@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fitkle/core/theme/app_theme.dart';
+import 'package:fitkle/features/member/domain/enums/country.dart';
 
 class MyProfileStatsSection extends StatelessWidget {
   final Map<String, dynamic> profile;
@@ -49,13 +50,19 @@ class MyProfileStatsSection extends StatelessWidget {
                 const Text(
                   'My Stats',
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 20),
+            // Nationality (same design as other stat items)
+            if (profile['nationalityEnum'] != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _buildNationalityItem(profile['nationalityEnum']),
+              ),
             _buildStatItem(Icons.location_on, 'Location', profile['location'].replaceAll(',', ' /')),
             const SizedBox(height: 10),
             _buildStatItem(Icons.check_circle_outline, 'Attendance', '${profile['attendanceRate']}%'),
@@ -63,6 +70,48 @@ class MyProfileStatsSection extends StatelessWidget {
             _buildStatItem(Icons.check_circle, 'RSVP', '${profile['totalRSVPs']}'),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildNationalityItem(Country country) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.muted.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.border.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.public,
+            size: 16,
+            color: Colors.pink.shade400,
+          ),
+          const SizedBox(width: 8),
+          const Text(
+            'Nationality',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.mutedForeground,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            country.nameEn,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            country.flag,
+            style: const TextStyle(fontSize: 16),
+          ),
+        ],
       ),
     );
   }
@@ -79,15 +128,15 @@ class MyProfileStatsSection extends StatelessWidget {
         children: [
           Icon(
             icon,
-            size: 20,
+            size: 16,
             color: Colors.pink.shade400,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           Text(
             label,
             style: const TextStyle(
               fontSize: 14,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
               color: AppTheme.mutedForeground,
             ),
           ),

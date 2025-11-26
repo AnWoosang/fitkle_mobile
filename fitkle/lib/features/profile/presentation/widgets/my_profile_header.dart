@@ -82,11 +82,11 @@ class MyProfileHeader extends StatelessWidget {
                 right: 4,
                 child: GestureDetector(
                   onTap: () {
-                    // TODO: Edit profile
+                    context.push('/settings?tab=edit-profile');
                   },
                   child: Container(
-                    width: 36,
-                    height: 36,
+                    width: 28,
+                    height: 28,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
@@ -97,7 +97,7 @@ class MyProfileHeader extends StatelessWidget {
                           AppTheme.primary.withValues(alpha: 0.9),
                         ],
                       ),
-                      border: Border.all(color: Colors.white, width: 3),
+                      border: Border.all(color: Colors.white, width: 2),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.15),
@@ -108,7 +108,7 @@ class MyProfileHeader extends StatelessWidget {
                     ),
                     child: const Icon(
                       Icons.edit,
-                      size: 16,
+                      size: 15,
                       color: Colors.white,
                     ),
                   ),
@@ -118,7 +118,7 @@ class MyProfileHeader extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Name and nationality
+          // Name and gender icon
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -129,14 +129,15 @@ class MyProfileHeader extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(width: 8),
-              Tooltip(
-                message: profile['nationalityFull'],
-                child: Text(
-                  profile['nationality'],
-                  style: const TextStyle(fontSize: 24),
+              if (profile['gender'] != null &&
+                  profile['gender'] != 'Prefer Not to say') ...[
+                const SizedBox(width: 8),
+                Icon(
+                  profile['gender'] == 'Male' ? Icons.male : Icons.female,
+                  size: 24,
+                  color: AppTheme.mutedForeground,
                 ),
-              ),
+              ],
             ],
           ),
           const SizedBox(height: 16),
@@ -244,8 +245,8 @@ class MyProfileHeader extends StatelessWidget {
           onCopyToast(label);
         },
         child: Container(
-          width: 36,
-          height: 36,
+          width: 28,
+          height: 28,
           decoration: BoxDecoration(
             color: AppTheme.muted.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(12),
@@ -260,7 +261,7 @@ class MyProfileHeader extends StatelessWidget {
             child: FaIcon(
               icon,
               size: 16,
-              color: Colors.black,
+              color: Colors.grey[700],
             ),
           ),
         ),

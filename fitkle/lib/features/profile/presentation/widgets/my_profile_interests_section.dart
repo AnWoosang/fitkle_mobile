@@ -50,8 +50,8 @@ class MyProfileInterestsSection extends StatelessWidget {
                 const Text(
                   'My interests',
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -73,25 +73,34 @@ class MyProfileInterestsSection extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: interests.map((interest) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  interest,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
+            interests.isEmpty
+                ? Text(
+                    'No interests set yet.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.mutedForeground.withValues(alpha: 0.6),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  )
+                : Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: interests.map((interest) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        interest,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
+                      ),
+                    )).toList(),
                   ),
-                ),
-              )).toList(),
-            ),
           ],
         ),
       ),

@@ -35,7 +35,7 @@ class GroupCard extends StatelessWidget {
       onTap: onTap ?? () => context.push('/groups/${group.id}'),
       child: Container(
         width: width,
-        height: 244,
+        height: 255,
         decoration: BoxDecoration(
           color: AppTheme.card,
           borderRadius: BorderRadius.circular(12),
@@ -118,7 +118,7 @@ class GroupCard extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Row(
             children: [
               const Icon(
