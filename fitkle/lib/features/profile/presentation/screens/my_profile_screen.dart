@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fitkle/core/theme/app_theme.dart';
-import 'package:fitkle/features/event/domain/entities/event_entity.dart';
-import 'package:fitkle/features/event/domain/entities/event_type.dart';
-import 'package:fitkle/features/group/domain/entities/group_entity.dart';
 import 'package:fitkle/features/profile/presentation/widgets/my_profile_header.dart';
 import 'package:fitkle/features/profile/presentation/widgets/my_profile_stats_section.dart';
 import 'package:fitkle/features/profile/presentation/widgets/my_profile_about_section.dart';
@@ -12,6 +9,8 @@ import 'package:fitkle/features/profile/presentation/widgets/my_profile_interest
 import 'package:fitkle/features/profile/presentation/widgets/my_profile_events_section.dart';
 import 'package:fitkle/features/profile/presentation/widgets/my_profile_groups_section.dart';
 import 'package:fitkle/features/member/presentation/providers/member_provider.dart';
+import 'package:fitkle/features/event/presentation/providers/event_provider.dart';
+import 'package:fitkle/features/group/presentation/providers/group_provider.dart';
 
 class MyProfileScreen extends ConsumerStatefulWidget {
   const MyProfileScreen({super.key});
@@ -21,91 +20,22 @@ class MyProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
-  final Map<String, dynamic> profile = {
-    'name': 'Tony',
-    'email': 'show19971002@gmail.com',
-    'location': 'Seoul, KR',
-    'nationality': '🇺🇸',
-    'nationalityFull': 'United States',
-    'bio': '안녕하세요! 서울에서 새로운 친구들을 만나고 다양한 활동을 즐기는 것을 좋아합니다. 카페 투어, 하이킹, 문화 체험 등 재미있는 것이라면 무엇이든 환영입니다! 😊',
-    'attendanceRate': 95,
-    'totalRSVPs': 19,
-    'groups': 2,
-    'interests': 6,
-  };
-
-  final List<String> myInterests = [
-    'Social',
-    'Outdoors',
-    'New In Town',
-    'Make New Friends',
-    'Fun Times',
-    'Social Networking'
-  ];
-
-  final List<EventEntity> myCreatedEvents = [
-    EventEntity(
-      id: '1',
-      title: 'Weekend Tennis Match 🎾',
-      datetime: DateTime.now().add(const Duration(days: 7)),
-      address: 'Seoul',
-      attendees: 3,
-      maxAttendees: 10,
-      thumbnailImageUrl: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8',
-      eventCategoryId: 'mock-category-id-sports',
-      eventType: EventType.offline,
-      description: 'Weekend tennis match',
-      hostName: 'Tony',
-      hostId: 'user-1',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    ),
-    EventEntity(
-      id: '2',
-      title: 'Morning Jog at Han River 🏃',
-      datetime: DateTime.now().add(const Duration(days: 10)),
-      address: 'Han River',
-      attendees: 5,
-      maxAttendees: 15,
-      thumbnailImageUrl: 'https://images.unsplash.com/photo-1571008887538-b36bb32f4571',
-      eventCategoryId: 'mock-category-id-sports',
-      eventType: EventType.offline,
-      description: 'Morning jog at Han River',
-      hostName: 'Tony',
-      hostId: 'user-1',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    ),
-  ];
-
-  final List<GroupEntity> myCreatedGroups = [
-    GroupEntity(
-      id: '1',
-      name: 'Darklight_Seoul',
-      description: 'Seoul social group',
-      groupCategoryId: 'mock-category-id-social',
-      totalMembers: 342,
-      thumbnailImageUrl: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30',
-      hostName: 'Tony',
-      hostId: 'user-1',
-      eventCount: 5,
-      tags: ['social'],
-      location: 'Seoul',
-    ),
-    GroupEntity(
-      id: '2',
-      name: 'Seoul Social and Wellness Meetup',
-      description: 'Wellness meetup group',
-      groupCategoryId: 'mock-category-id-wellness',
-      totalMembers: 156,
-      thumbnailImageUrl: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18',
-      hostName: 'Tony',
-      hostId: 'user-1',
-      eventCount: 3,
-      tags: ['wellness'],
-      location: 'Seoul',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // Load events and groups when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final memberAsync = ref.read(currentMemberProvider);
+      memberAsync.whenData((member) {
+        if (member != null) {
+          // Load upcoming events
+          ref.read(upcomingEventsProvider.notifier).loadUpcomingEvents(member.id);
+          // Load my groups
+          ref.read(myGroupsProvider.notifier).loadMyGroups(member.id);
+        }
+      });
+    });
+  }
 
   void _showCopyToast(String label) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -228,16 +158,26 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                   const SizedBox(height: 24),
 
                   // My Events Management
-                  MyProfileEventsSection(
-                    events: myCreatedEvents,
-                    totalRSVPs: profile['totalRSVPs'] as int,
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final upcomingEventsState = ref.watch(upcomingEventsProvider);
+                      return MyProfileEventsSection(
+                        events: upcomingEventsState.events,
+                        totalRSVPs: profile['totalRSVPs'] as int,
+                      );
+                    },
                   ),
                   const SizedBox(height: 16),
 
                   // My Groups Management
-                  MyProfileGroupsSection(
-                    groups: myCreatedGroups,
-                    totalJoinedGroups: profile['groups'] as int,
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final myGroupsState = ref.watch(myGroupsProvider);
+                      return MyProfileGroupsSection(
+                        groups: myGroupsState.groups,
+                        totalJoinedGroups: myGroupsState.groups.length,
+                      );
+                    },
                   ),
                   const SizedBox(height: 16),
 
