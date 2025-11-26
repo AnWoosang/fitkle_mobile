@@ -21,17 +21,22 @@ class GroupRepositoryImpl implements GroupRepository {
   Future<Either<Failure, List<GroupEntity>>> getGroups({
     String? category,
     String? searchQuery,
+    int limit = 30,
+    int offset = 0,
   }) async {
     if (await networkInfo.isConnected) {
       try {
         Logger.info(
-          'Fetching groups (category: $category, search: $searchQuery)',
+          'Fetching groups (category: $category, search: $searchQuery, limit: $limit, offset: $offset)',
           tag: 'GroupRepository',
         );
-        final groups = await remoteDataSource.getGroups(
+        final groupModels = await remoteDataSource.getGroups(
           category: category,
           searchQuery: searchQuery,
+          limit: limit,
+          offset: offset,
         );
+        final groups = groupModels.map((model) => model.toEntity()).toList();
         Logger.success(
           'Fetched ${groups.length} groups',
           tag: 'GroupRepository',
@@ -63,12 +68,12 @@ class GroupRepositoryImpl implements GroupRepository {
     if (await networkInfo.isConnected) {
       try {
         Logger.info('Fetching group: $groupId', tag: 'GroupRepository');
-        final group = await remoteDataSource.getGroupById(groupId);
+        final groupModel = await remoteDataSource.getGroupById(groupId);
         Logger.success(
-          'Fetched group: ${group.name}',
+          'Fetched group: ${groupModel.name}',
           tag: 'GroupRepository',
         );
-        return Right(group);
+        return Right(groupModel.toEntity());
       } on NotFoundException catch (e) {
         Logger.warning(
           'Group not found: $groupId',
@@ -93,9 +98,26 @@ class GroupRepositoryImpl implements GroupRepository {
   Future<Either<Failure, List<GroupEntity>>> getGroupsByHost(String hostId) async {
     if (await networkInfo.isConnected) {
       try {
-        final groups = await remoteDataSource.getGroupsByHost(hostId);
-        return Right(groups);
+        final groupModels = await remoteDataSource.getGroupsByHost(hostId);
+        return Right(groupModels.map((model) => model.toEntity()).toList());
       } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      }
+    } else {
+      return const Left(NetworkFailure('No internet connection'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<GroupEntity>>> getGroupsByMember(String memberId) async {
+    if (await networkInfo.isConnected) {
+      try {
+        Logger.info('Fetching groups for member: $memberId', tag: 'GroupRepository');
+        final groupModels = await remoteDataSource.getGroupsByMember(memberId);
+        Logger.success('Fetched ${groupModels.length} groups for member', tag: 'GroupRepository');
+        return Right(groupModels.map((model) => model.toEntity()).toList());
+      } on ServerException catch (e) {
+        Logger.error('Server error while fetching groups for member', tag: 'GroupRepository', error: e);
         return Left(ServerFailure(e.message));
       }
     } else {
@@ -109,7 +131,7 @@ class GroupRepositoryImpl implements GroupRepository {
       try {
         final groupModel = GroupModel.fromEntity(group);
         final createdGroup = await remoteDataSource.createGroup(groupModel);
-        return Right(createdGroup);
+        return Right(createdGroup.toEntity());
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       }
@@ -124,7 +146,7 @@ class GroupRepositoryImpl implements GroupRepository {
       try {
         final groupModel = GroupModel.fromEntity(group);
         final updatedGroup = await remoteDataSource.updateGroup(groupModel);
-        return Right(updatedGroup);
+        return Right(updatedGroup.toEntity());
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       }
@@ -172,6 +194,13 @@ class GroupRepositoryImpl implements GroupRepository {
       }
     } else {
       return const Left(NetworkFailure('No internet connection'));
+    }
+  }
+
+  @override
+  Future<void> incrementViewCount(String groupId) async {
+    if (await networkInfo.isConnected) {
+      await remoteDataSource.incrementViewCount(groupId);
     }
   }
 }

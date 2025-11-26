@@ -12,11 +12,15 @@ class EventService {
     String? category,
     String? searchQuery,
     bool? isGroupEvent,
+    int limit = 30,
+    int offset = 0,
   }) async {
     return await _repository.getEvents(
       category: category,
       searchQuery: searchQuery,
       isGroupEvent: isGroupEvent,
+      limit: limit,
+      offset: offset,
     );
   }
 
@@ -24,8 +28,8 @@ class EventService {
     return await _repository.getEventById(eventId);
   }
 
-  Future<Either<Failure, List<EventEntity>>> getUpcomingEvents() async {
-    return await _repository.getUpcomingEvents();
+  Future<Either<Failure, List<EventEntity>>> getUpcomingEventsByMember(String memberId) async {
+    return await _repository.getUpcomingEventsByMember(memberId);
   }
 
   Future<Either<Failure, List<EventEntity>>> getEventsByHost(String hostId) async {
@@ -50,5 +54,9 @@ class EventService {
 
   Future<Either<Failure, void>> leaveEvent(String eventId, String userId) async {
     return await _repository.leaveEvent(eventId, userId);
+  }
+
+  Future<void> incrementViewCount(String eventId) async {
+    await _repository.incrementViewCount(eventId);
   }
 }

@@ -15,6 +15,7 @@ class GroupEntity extends Equatable {
   final String location;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final int viewCount;
 
   const GroupEntity({
     required this.id,
@@ -30,6 +31,7 @@ class GroupEntity extends Equatable {
     required this.location,
     this.createdAt,
     this.updatedAt,
+    this.viewCount = 0,
   });
 
   @override
@@ -47,5 +49,6 @@ class GroupEntity extends Equatable {
         location,
         createdAt,
         updatedAt,
+        viewCount,
       ];
 }

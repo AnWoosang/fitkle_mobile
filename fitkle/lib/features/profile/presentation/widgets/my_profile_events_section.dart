@@ -4,7 +4,7 @@ import 'package:fitkle/core/theme/app_theme.dart';
 import 'package:fitkle/features/event/presentation/widgets/event_card.dart';
 import 'package:fitkle/features/event/domain/entities/event_entity.dart';
 
-class MyProfileEventsSection extends StatelessWidget {
+class MyProfileEventsSection extends StatefulWidget {
   final List<EventEntity> events;
   final int totalRSVPs;
 
@@ -13,6 +13,20 @@ class MyProfileEventsSection extends StatelessWidget {
     required this.events,
     required this.totalRSVPs,
   });
+
+  @override
+  State<MyProfileEventsSection> createState() => _MyProfileEventsSectionState();
+}
+
+class _MyProfileEventsSectionState extends State<MyProfileEventsSection> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,29 +65,17 @@ class MyProfileEventsSection extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '내 이벤트',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          '만든 것 ${events.length}개 · 참여 중 $totalRSVPs개',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.mutedForeground,
-                          ),
-                        ),
-                      ],
+                  const Expanded(
+                    child: Text(
+                      '내 이벤트',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   GestureDetector(
                     onTap: () {
-                      context.push('/events/create');
+                      context.push('/my-events');
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -86,19 +88,19 @@ class MyProfileEventsSection extends StatelessWidget {
                       ),
                       child: const Row(
                         children: [
-                          Icon(
-                            Icons.add,
-                            size: 16,
-                            color: AppTheme.primary,
-                          ),
-                          SizedBox(width: 4),
                           Text(
-                            '만들기',
+                            'View All',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: AppTheme.primary,
                             ),
+                          ),
+                          SizedBox(width: 4),
+                          Icon(
+                            Icons.chevron_right,
+                            size: 16,
+                            color: AppTheme.primary,
                           ),
                         ],
                       ),
@@ -109,48 +111,64 @@ class MyProfileEventsSection extends StatelessWidget {
             ),
 
             // Events List
-            if (events.isNotEmpty) ...[
-              ...events.map((event) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: EventCard(
-                      event: event,
-                      type: EventCardType.horizontal,
-                    ),
-                  )),
-              GestureDetector(
-                onTap: () {
-                  context.push('/my-events');
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.muted.withValues(alpha: 0.2),
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(24),
-                      bottomRight: Radius.circular(24),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '전체보기',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primary,
-                        ),
-                      ),
-                      SizedBox(width: 4),
-                      Icon(
-                        Icons.chevron_right,
-                        size: 16,
-                        color: AppTheme.primary,
-                      ),
-                    ],
+            if (widget.events.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: SizedBox(
+                  height: 420, // 이벤트 카드 2개 높이 (각 200px + 간격 20px)
+                  child: PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentPage = index;
+                      });
+                    },
+                    itemCount: (widget.events.length / 2).ceil(), // 2개씩 묶어서 페이지 수 계산
+                    itemBuilder: (context, pageIndex) {
+                      final startIndex = pageIndex * 2;
+                      final endIndex = (startIndex + 2).clamp(0, widget.events.length);
+                      final pageEvents = widget.events.sublist(startIndex, endIndex);
+
+                      return Column(
+                        children: pageEvents.map((event) =>
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: EventCard(
+                              event: event,
+                              type: EventCardType.horizontal,
+                            ),
+                          ),
+                        ).toList(),
+                      );
+                    },
                   ),
                 ),
               ),
+              const SizedBox(height: 16),
+              // Page Indicator
+              if ((widget.events.length / 2).ceil() > 1)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      (widget.events.length / 2).ceil(),
+                      (index) => Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: _currentPage == index ? 20 : 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: _currentPage == index
+                              ? AppTheme.primary
+                              : AppTheme.primary.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                const SizedBox(height: 20),
             ] else
               _buildEmptyState(context),
           ],

@@ -44,7 +44,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> with SingleTi
     _animationController.value = 1.0; // Start visible
     _scrollController.addListener(_handleScroll);
     Future.microtask(() {
-      ref.read(groupProvider.notifier).loadGroups();
+      _onSearchChanged(forceRefresh: false); // 초기 로드는 캐시 사용 가능
     });
   }
 
@@ -74,12 +74,13 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> with SingleTi
     _lastScrollOffset = currentOffset;
   }
 
-  void _onSearchChanged() {
+  void _onSearchChanged({bool forceRefresh = true}) {
     final query = searchQuery.isEmpty ? null : searchQuery;
     final category = selectedCategoryCode == 'all' ? null : selectedCategoryCode;
     ref.read(groupProvider.notifier).loadGroups(
           category: category,
           searchQuery: query,
+          forceRefresh: forceRefresh,
         );
   }
 

@@ -22,18 +22,23 @@ class EventRepositoryImpl implements EventRepository {
     String? category,
     String? searchQuery,
     bool? isGroupEvent,
+    int limit = 30,
+    int offset = 0,
   }) async {
     if (await networkInfo.isConnected) {
       try {
         Logger.info(
-          'Fetching events (category: $category, search: $searchQuery, isGroupEvent: $isGroupEvent)',
+          'Fetching events (category: $category, search: $searchQuery, isGroupEvent: $isGroupEvent, limit: $limit, offset: $offset)',
           tag: 'EventRepository',
         );
-        final events = await remoteDataSource.getEvents(
+        final eventModels = await remoteDataSource.getEvents(
           category: category,
           searchQuery: searchQuery,
           isGroupEvent: isGroupEvent,
+          limit: limit,
+          offset: offset,
         );
+        final events = eventModels.map((model) => model.toEntity()).toList();
         Logger.success(
           'Fetched ${events.length} events',
           tag: 'EventRepository',
@@ -65,12 +70,12 @@ class EventRepositoryImpl implements EventRepository {
     if (await networkInfo.isConnected) {
       try {
         Logger.info('Fetching event: $eventId', tag: 'EventRepository');
-        final event = await remoteDataSource.getEventById(eventId);
+        final eventModel = await remoteDataSource.getEventById(eventId);
         Logger.success(
-          'Fetched event: ${event.title}',
+          'Fetched event: ${eventModel.title}',
           tag: 'EventRepository',
         );
-        return Right(event);
+        return Right(eventModel.toEntity());
       } on NotFoundException catch (e) {
         Logger.warning(
           'Event not found: $eventId',
@@ -92,12 +97,15 @@ class EventRepositoryImpl implements EventRepository {
   }
 
   @override
-  Future<Either<Failure, List<EventEntity>>> getUpcomingEvents() async {
+  Future<Either<Failure, List<EventEntity>>> getUpcomingEventsByMember(String memberId) async {
     if (await networkInfo.isConnected) {
       try {
-        final events = await remoteDataSource.getUpcomingEvents();
-        return Right(events);
+        Logger.info('Fetching upcoming events for member: $memberId', tag: 'EventRepository');
+        final eventModels = await remoteDataSource.getUpcomingEventsByMember(memberId);
+        Logger.success('Fetched ${eventModels.length} upcoming events', tag: 'EventRepository');
+        return Right(eventModels.map((model) => model.toEntity()).toList());
       } on ServerException catch (e) {
+        Logger.error('Server error while fetching upcoming events', tag: 'EventRepository', error: e);
         return Left(ServerFailure(e.message));
       }
     } else {
@@ -109,8 +117,8 @@ class EventRepositoryImpl implements EventRepository {
   Future<Either<Failure, List<EventEntity>>> getEventsByHost(String hostId) async {
     if (await networkInfo.isConnected) {
       try {
-        final events = await remoteDataSource.getEventsByHost(hostId);
-        return Right(events);
+        final eventModels = await remoteDataSource.getEventsByHost(hostId);
+        return Right(eventModels.map((model) => model.toEntity()).toList());
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       }
@@ -125,7 +133,7 @@ class EventRepositoryImpl implements EventRepository {
       try {
         final eventModel = EventModel.fromEntity(event);
         final createdEvent = await remoteDataSource.createEvent(eventModel);
-        return Right(createdEvent);
+        return Right(createdEvent.toEntity());
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       }
@@ -140,7 +148,7 @@ class EventRepositoryImpl implements EventRepository {
       try {
         final eventModel = EventModel.fromEntity(event);
         final updatedEvent = await remoteDataSource.updateEvent(eventModel);
-        return Right(updatedEvent);
+        return Right(updatedEvent.toEntity());
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       }
@@ -188,6 +196,13 @@ class EventRepositoryImpl implements EventRepository {
       }
     } else {
       return const Left(NetworkFailure('No internet connection'));
+    }
+  }
+
+  @override
+  Future<void> incrementViewCount(String eventId) async {
+    if (await networkInfo.isConnected) {
+      await remoteDataSource.incrementViewCount(eventId);
     }
   }
 }

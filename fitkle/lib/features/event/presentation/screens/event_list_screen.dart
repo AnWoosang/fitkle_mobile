@@ -48,7 +48,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> with SingleTi
     _animationController.value = 1.0; // Start visible
     _scrollController.addListener(_handleScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadData();
+      _loadData(forceRefresh: false); // 초기 로드는 캐시 사용 가능
     });
   }
 
@@ -75,9 +75,23 @@ class _EventListScreenState extends ConsumerState<EventListScreen> with SingleTi
     }
 
     _lastScrollOffset = currentOffset;
+
+    // 무한 스크롤: 스크롤이 끝에 가까워지면 더 많은 데이터 로드
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _loadMoreData();
+    }
   }
 
-  void _loadData() {
+  void _loadMoreData() {
+    if (selectedTab == 'groups') {
+      ref.read(groupProvider.notifier).loadMoreGroups();
+    } else {
+      ref.read(eventProvider.notifier).loadMoreEvents();
+    }
+  }
+
+  void _loadData({bool forceRefresh = true}) {
     final category = selectedCategory == 'ALL' ? null : selectedCategory;
     final query = searchQuery.isEmpty ? null : searchQuery;
 
@@ -85,6 +99,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> with SingleTi
       ref.read(groupProvider.notifier).loadGroups(
         category: category,
         searchQuery: query,
+        forceRefresh: forceRefresh,
       );
     } else {
       // Determine if we should filter by group events or personal events
@@ -98,6 +113,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> with SingleTi
         category: category,
         searchQuery: query,
         isGroupEvent: isGroupEvent,
+        forceRefresh: forceRefresh,
       );
     }
   }
@@ -223,6 +239,27 @@ class _EventListScreenState extends ConsumerState<EventListScreen> with SingleTi
             ),
           ),
         ),
+        // 로딩 중 인디케이터
+        if (eventState.isLoadingMore)
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ),
+        // 더 이상 데이터가 없을 때 메시지
+        if (!eventState.hasMoreData && events.isNotEmpty)
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(
+                child: Text(
+                  '모든 이벤트를 불러왔습니다',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            ),
+          ),
         const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
       ],
     );
@@ -263,6 +300,27 @@ class _EventListScreenState extends ConsumerState<EventListScreen> with SingleTi
             ),
           ),
         ),
+        // 로딩 중 인디케이터
+        if (groupState.isLoadingMore)
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ),
+        // 더 이상 데이터가 없을 때 메시지
+        if (!groupState.hasMoreData && groups.isNotEmpty)
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(
+                child: Text(
+                  '모든 그룹을 불러왔습니다',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            ),
+          ),
         const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
       ],
     );

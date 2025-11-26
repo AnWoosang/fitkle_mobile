@@ -5,53 +5,64 @@ import 'package:fitkle/core/theme/app_theme.dart';
 import 'package:fitkle/features/group/presentation/providers/group_provider.dart';
 import 'package:fitkle/features/group/presentation/widgets/group_card.dart';
 import 'package:fitkle/features/group/domain/entities/group_entity.dart';
+import 'package:fitkle/features/auth/presentation/providers/auth_provider.dart';
 
-class MyGroupsSection extends ConsumerWidget {
+class MyGroupsSection extends ConsumerStatefulWidget {
   const MyGroupsSection({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final groupState = ref.watch(groupProvider);
+  ConsumerState<MyGroupsSection> createState() => _MyGroupsSectionState();
+}
 
-    // Mock: Show first 4 groups as "my groups"
-    final myGroups = groupState.groups.take(4).toList();
+class _MyGroupsSectionState extends ConsumerState<MyGroupsSection> {
+  bool _isInitialized = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+    final myGroupsState = ref.watch(myGroupsProvider);
+
+    // 로그인된 사용자가 있으면 해당 멤버의 그룹 로드
+    if (authState.isAuthenticated && authState.user != null && !_isInitialized) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(myGroupsProvider.notifier).loadMyGroups(authState.user!.id);
+        setState(() {
+          _isInitialized = true;
+        });
+      });
+    }
+
+    // 최대 20개 그룹 표시
+    final myGroups = myGroupsState.groups.take(20).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildHeader(context, myGroups.length),
+        _buildHeader(context),
         const SizedBox(height: 16),
-        if (groupState.isLoading)
+        if (myGroupsState.isLoading)
           _buildLoadingState()
         else if (myGroups.isNotEmpty)
-          _buildGroupsGrid(context, myGroups)
+          _buildGroupsList(context, myGroups)
         else
           _buildEmptyState(context),
       ],
     );
   }
 
-  Widget _buildHeader(BuildContext context, int groupCount) {
+  Widget _buildHeader(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
+        const Row(
           children: [
-            const Icon(Icons.people, size: 20, color: AppTheme.primary),
-            const SizedBox(width: 8),
-            const Text(
+            Icon(Icons.people, size: 20, color: AppTheme.primary),
+            SizedBox(width: 8),
+            Text(
               'My Groups',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              '($groupCount)',
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppTheme.mutedForeground,
               ),
             ),
           ],
@@ -80,25 +91,25 @@ class MyGroupsSection extends ConsumerWidget {
     );
   }
 
-  Widget _buildGroupsGrid(BuildContext context, List<GroupEntity> groups) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.68,
+  Widget _buildGroupsList(BuildContext context, List<GroupEntity> groups) {
+    return SizedBox(
+      height: 254, // GroupCard small 높이 + 여유
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: groups.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: EdgeInsets.only(
+              right: index < groups.length - 1 ? 12 : 0,
+            ),
+            child: GroupCard(
+              group: groups[index],
+              size: GroupCardSize.small,
+              width: 160, // Trending This Week와 동일한 너비
+            ),
+          );
+        },
       ),
-      itemCount: groups.length,
-      itemBuilder: (context, index) => _buildGroupCard(context, groups[index]),
-    );
-  }
-
-  Widget _buildGroupCard(BuildContext context, GroupEntity group) {
-    return GroupCard(
-      group: group,
-      size: GroupCardSize.small,
     );
   }
 

@@ -17,11 +17,11 @@ class MemberRepositoryImpl implements MemberRepository {
   });
 
   @override
-  Future<Either<Failure, MemberEntity>> getMemberById(String userId) async {
+  Future<Either<Failure, MemberEntity>> getMemberById(String memberId) async {
     if (await networkInfo.isConnected) {
       try {
-        final user = await remoteDataSource.getMemberById(userId);
-        return Right(user);
+        final memberModel = await remoteDataSource.getMemberById(memberId);
+        return Right(memberModel.toEntity());
       } on NotFoundException catch (e) {
         return Left(NotFoundFailure(e.message));
       } on ServerException catch (e) {
@@ -33,12 +33,13 @@ class MemberRepositoryImpl implements MemberRepository {
   }
 
   @override
-  Future<Either<Failure, MemberEntity>> updateMember(MemberEntity user) async {
+  Future<Either<Failure, MemberEntity>> getMemberByEmail(String email) async {
     if (await networkInfo.isConnected) {
       try {
-        final userModel = MemberModel.fromEntity(user);
-        final updatedUser = await remoteDataSource.updateMember(userModel);
-        return Right(updatedUser);
+        final memberModel = await remoteDataSource.getMemberByEmail(email);
+        return Right(memberModel.toEntity());
+      } on NotFoundException catch (e) {
+        return Left(NotFoundFailure(e.message));
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       }
@@ -48,10 +49,54 @@ class MemberRepositoryImpl implements MemberRepository {
   }
 
   @override
-  Future<Either<Failure, void>> updateAvatar(String userId, String avatarUrl) async {
+  Future<Either<Failure, MemberEntity>> createMember(MemberEntity member) async {
     if (await networkInfo.isConnected) {
       try {
-        await remoteDataSource.updateAvatar(userId, avatarUrl);
+        final memberModel = MemberModel.fromEntity(member);
+        final createdMember = await remoteDataSource.createMember(memberModel);
+        return Right(createdMember.toEntity());
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      }
+    } else {
+      return const Left(NetworkFailure('No internet connection'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, MemberEntity>> updateMember(MemberEntity member) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final memberModel = MemberModel.fromEntity(member);
+        final updatedMember = await remoteDataSource.updateMember(memberModel);
+        return Right(updatedMember.toEntity());
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      }
+    } else {
+      return const Left(NetworkFailure('No internet connection'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateAvatar(String memberId, String avatarUrl) async {
+    if (await networkInfo.isConnected) {
+      try {
+        await remoteDataSource.updateAvatar(memberId, avatarUrl);
+        return const Right(null);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      }
+    } else {
+      return const Left(NetworkFailure('No internet connection'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> softDeleteMember(String memberId) async {
+    if (await networkInfo.isConnected) {
+      try {
+        await remoteDataSource.softDeleteMember(memberId);
         return const Right(null);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
@@ -65,8 +110,8 @@ class MemberRepositoryImpl implements MemberRepository {
   Future<Either<Failure, List<MemberEntity>>> searchMembers(String query) async {
     if (await networkInfo.isConnected) {
       try {
-        final users = await remoteDataSource.searchMembers(query);
-        return Right(users);
+        final memberModels = await remoteDataSource.searchMembers(query);
+        return Right(memberModels.map((model) => model.toEntity()).toList());
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       }
@@ -95,6 +140,20 @@ class MemberRepositoryImpl implements MemberRepository {
       try {
         final isAvailable = await remoteDataSource.checkEmailAvailability(email);
         return Right(isAvailable);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      }
+    } else {
+      return const Left(NetworkFailure('No internet connection'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<MemberEntity>>> getAllMembers({int limit = 50, int offset = 0}) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final memberModels = await remoteDataSource.getAllMembers(limit: limit, offset: offset);
+        return Right(memberModels.map((model) => model.toEntity()).toList());
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       }

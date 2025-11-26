@@ -6,6 +6,7 @@ import 'package:fitkle/features/member/data/datasources/member_remote_datasource
 import 'package:fitkle/features/member/data/repositories/member_repository_impl.dart';
 import 'package:fitkle/core/config/supabase_client.dart';
 import 'package:fitkle/core/network/network_info.dart';
+import 'package:fitkle/features/auth/presentation/providers/auth_provider.dart';
 
 // ============================================================================
 // DEPENDENCY INJECTION - Member Feature
@@ -114,4 +115,33 @@ class MemberProfileNotifier extends StateNotifier<MemberState> {
 final memberProfileProvider = StateNotifierProvider<MemberProfileNotifier, MemberState>((ref) {
   ref.keepAlive(); // Provider가 dispose되지 않도록 유지 (메모리 캐싱)
   return MemberProfileNotifier(ref.watch(memberServiceProvider));
+});
+
+/// 현재 로그인한 사용자의 Member 정보를 가져오는 Provider
+final currentMemberProvider = FutureProvider<MemberEntity?>((ref) async {
+  print('========== CURRENT MEMBER PROVIDER ==========');
+  // auth provider에서 현재 사용자 ID 가져오기
+  final authUser = ref.watch(currentUserProvider);
+  print('[MemberProvider] authUser: ${authUser?.email}');
+
+  if (authUser == null) {
+    print('[MemberProvider] authUser가 null입니다');
+    return null;
+  }
+
+  // member service를 통해 member 정보 가져오기
+  print('[MemberProvider] member 정보 조회 시작: ${authUser.id}');
+  final memberService = ref.watch(memberServiceProvider);
+  final result = await memberService.getMemberById(authUser.id);
+
+  return result.fold(
+    (failure) {
+      print('[MemberProvider] member 조회 실패: ${failure.message}');
+      return null;
+    },
+    (member) {
+      print('[MemberProvider] member 조회 성공: ${member.email}');
+      return member;
+    },
+  );
 });

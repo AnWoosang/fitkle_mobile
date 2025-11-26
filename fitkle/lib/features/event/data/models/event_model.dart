@@ -1,29 +1,53 @@
 import 'package:fitkle/features/event/domain/entities/event_entity.dart';
 import 'package:fitkle/features/event/domain/entities/event_type.dart';
 
-class EventModel extends EventEntity {
+class EventModel {
+  final String id;
+  final String title;
+  final DateTime datetime;
+  final String address;
+  final String? detailAddress;
+  final int attendees;
+  final int maxAttendees;
+  final String thumbnailImageUrl;
+  final String eventCategoryId;
+  final EventType eventType;
+  final String? groupId;
+  final String? groupName;
+  final String description;
+  final String hostName;
+  final String hostId;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final double? latitude;
+  final double? longitude;
+  final List<String> tags;
+  final bool isGroupMembersOnly;
+  final int viewCount;
+
   const EventModel({
-    required super.id,
-    required super.title,
-    required super.datetime,
-    required super.address,
-    super.detailAddress,
-    required super.attendees,
-    required super.maxAttendees,
-    required super.thumbnailImageUrl,
-    required super.eventCategoryId,
-    required super.eventType,
-    super.groupId,
-    super.groupName,
-    required super.description,
-    required super.hostName,
-    required super.hostId,
-    required super.createdAt,
-    required super.updatedAt,
-    super.latitude,
-    super.longitude,
-    super.tags = const [],
-    super.isGroupMembersOnly = false,
+    required this.id,
+    required this.title,
+    required this.datetime,
+    required this.address,
+    this.detailAddress,
+    required this.attendees,
+    required this.maxAttendees,
+    required this.thumbnailImageUrl,
+    required this.eventCategoryId,
+    required this.eventType,
+    this.groupId,
+    this.groupName,
+    required this.description,
+    required this.hostName,
+    required this.hostId,
+    required this.createdAt,
+    required this.updatedAt,
+    this.latitude,
+    this.longitude,
+    this.tags = const [],
+    this.isGroupMembersOnly = false,
+    this.viewCount = 0,
   });
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
@@ -67,6 +91,7 @@ class EventModel extends EventEntity {
       longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
       tags: parsedTags,
       isGroupMembersOnly: json['is_group_members_only'] as bool? ?? false,
+      viewCount: (json['view_count'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -93,9 +118,39 @@ class EventModel extends EventEntity {
       'longitude': longitude,
       'tags': tags,
       'is_group_members_only': isGroupMembersOnly,
+      'view_count': viewCount,
     };
   }
 
+  /// Convert Model to Entity (Data Layer → Domain Layer)
+  EventEntity toEntity() {
+    return EventEntity(
+      id: id,
+      title: title,
+      datetime: datetime,
+      address: address,
+      detailAddress: detailAddress,
+      attendees: attendees,
+      maxAttendees: maxAttendees,
+      thumbnailImageUrl: thumbnailImageUrl,
+      eventCategoryId: eventCategoryId,
+      eventType: eventType,
+      groupId: groupId,
+      groupName: groupName,
+      description: description,
+      hostName: hostName,
+      hostId: hostId,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      latitude: latitude,
+      longitude: longitude,
+      tags: tags,
+      isGroupMembersOnly: isGroupMembersOnly,
+      viewCount: viewCount,
+    );
+  }
+
+  /// Create Model from Entity (Domain Layer → Data Layer)
   factory EventModel.fromEntity(EventEntity entity) {
     return EventModel(
       id: entity.id,
@@ -119,6 +174,7 @@ class EventModel extends EventEntity {
       longitude: entity.longitude,
       tags: entity.tags,
       isGroupMembersOnly: entity.isGroupMembersOnly,
+      viewCount: entity.viewCount,
     );
   }
 }

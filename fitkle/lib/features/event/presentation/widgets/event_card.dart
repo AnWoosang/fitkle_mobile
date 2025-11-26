@@ -47,7 +47,7 @@ class EventCard extends StatelessWidget {
         border: Border.all(color: AppTheme.border),
       ),
       child: InkWell(
-        onTap: () => context.go('/events/${event.id}'),
+        onTap: () => context.push('/events/${event.id}'),
         borderRadius: BorderRadius.circular(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,7 +158,7 @@ class EventCard extends StatelessWidget {
         border: Border.all(color: AppTheme.border),
       ),
       child: InkWell(
-        onTap: () => context.go('/events/${event.id}'),
+        onTap: () => context.push('/events/${event.id}'),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -280,7 +280,7 @@ class EventCard extends StatelessWidget {
         ),
       ),
       child: InkWell(
-        onTap: onTap ?? () => context.go('/events/${event.id}'),
+        onTap: onTap ?? () => context.push('/events/${event.id}'),
         borderRadius: BorderRadius.circular(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

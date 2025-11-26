@@ -38,6 +38,12 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen>
   void initState() {
     super.initState();
     initializeScrolling();
+    // 조회수 증가 (세션당 한 번만)
+    Future.microtask(() {
+      ref
+          .read(eventDetailProvider(widget.eventId).notifier)
+          .incrementViewCount(widget.eventId);
+    });
   }
 
   @override
@@ -147,7 +153,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen>
                   if (context.canPop()) {
                     context.pop();
                   } else {
-                    context.go('/');
+                    context.go('/home');
                   }
                 },
                 actions: [

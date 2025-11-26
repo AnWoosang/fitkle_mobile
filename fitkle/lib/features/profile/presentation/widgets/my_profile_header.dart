@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fitkle/core/theme/app_theme.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class MyProfileHeader extends StatelessWidget {
   final Map<String, dynamic> profile;
@@ -138,39 +139,65 @@ class MyProfileHeader extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 4),
-
-          // Username
-          Text(
-            '@${profile['name'].toLowerCase()}',
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppTheme.mutedForeground,
-            ),
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Social Links
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildSocialButton(
-                context,
-                Icons.email,
-                profile['email'],
-              ),
-              const SizedBox(width: 12),
-              _buildSocialButton(
-                context,
-                Icons.camera_alt,
-                '@${profile['name'].toLowerCase()}',
-              ),
-              const SizedBox(width: 12),
-              _buildSocialButton(
-                context,
-                Icons.alternate_email,
-                '@${profile['name'].toLowerCase()}',
-              ),
+              if (profile['emailHandle'] != null)
+                _buildSocialButton(
+                  context,
+                  FontAwesomeIcons.solidEnvelope,
+                  profile['emailHandle'],
+                  '이메일',
+                ),
+              if (profile['emailHandle'] != null &&
+                  (profile['instagramHandle'] != null ||
+                   profile['twitterHandle'] != null ||
+                   profile['linkedinHandle'] != null ||
+                   profile['facebookHandle'] != null))
+                const SizedBox(width: 12),
+              if (profile['instagramHandle'] != null)
+                _buildSocialButton(
+                  context,
+                  FontAwesomeIcons.instagram,
+                  profile['instagramHandle'],
+                  '인스타그램',
+                ),
+              if (profile['instagramHandle'] != null &&
+                  (profile['twitterHandle'] != null ||
+                   profile['linkedinHandle'] != null ||
+                   profile['facebookHandle'] != null))
+                const SizedBox(width: 12),
+              if (profile['twitterHandle'] != null)
+                _buildSocialButton(
+                  context,
+                  FontAwesomeIcons.twitter,
+                  profile['twitterHandle'],
+                  '트위터',
+                ),
+              if (profile['twitterHandle'] != null &&
+                  (profile['linkedinHandle'] != null ||
+                   profile['facebookHandle'] != null))
+                const SizedBox(width: 12),
+              if (profile['linkedinHandle'] != null)
+                _buildSocialButton(
+                  context,
+                  FontAwesomeIcons.linkedin,
+                  profile['linkedinHandle'],
+                  '링크드인',
+                ),
+              if (profile['linkedinHandle'] != null &&
+                  profile['facebookHandle'] != null)
+                const SizedBox(width: 12),
+              if (profile['facebookHandle'] != null)
+                _buildSocialButton(
+                  context,
+                  FontAwesomeIcons.facebook,
+                  profile['facebookHandle'],
+                  '페이스북',
+                ),
             ],
           ),
         ],
@@ -207,13 +234,14 @@ class MyProfileHeader extends StatelessWidget {
     BuildContext context,
     IconData icon,
     String value,
+    String label,
   ) {
     return Tooltip(
       message: value,
       child: GestureDetector(
         onTap: () {
           Clipboard.setData(ClipboardData(text: value));
-          onCopyToast(icon == Icons.email ? '이메일' : '아이디');
+          onCopyToast(label);
         },
         child: Container(
           width: 36,
@@ -228,10 +256,12 @@ class MyProfileHeader extends StatelessWidget {
               ),
             ],
           ),
-          child: Icon(
-            icon,
-            size: 16,
-            color: AppTheme.primary,
+          child: Center(
+            child: FaIcon(
+              icon,
+              size: 16,
+              color: Colors.black,
+            ),
           ),
         ),
       ),

@@ -71,7 +71,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               if (context.canPop()) {
                 context.pop();
               } else {
-                context.go('/');
+                context.go('/home');
               }
             },
           ),
@@ -331,7 +331,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               if (context.canPop()) {
                 context.pop();
               } else {
-                context.go('/');
+                context.go('/home');
               }
             },
             style: OutlinedButton.styleFrom(

@@ -11,12 +11,14 @@ enum GroupCardSize { small, large }
 class GroupCard extends StatelessWidget {
   final GroupEntity group;
   final GroupCardSize size;
+  final double? width;
   final VoidCallback? onTap;
 
   const GroupCard({
     super.key,
     required this.group,
     this.size = GroupCardSize.large,
+    this.width,
     this.onTap,
   });
 
@@ -30,8 +32,9 @@ class GroupCard extends StatelessWidget {
   // Small card for grid layout (home screen)
   Widget _buildSmallCard(BuildContext context) {
     return GestureDetector(
-      onTap: onTap ?? () => context.go('/groups/${group.id}'),
+      onTap: onTap ?? () => context.push('/groups/${group.id}'),
       child: Container(
+        width: width,
         height: 244,
         decoration: BoxDecoration(
           color: AppTheme.card,
@@ -42,7 +45,7 @@ class GroupCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSmallImage(),
-            _buildSmallInfo(),
+            Expanded(child: _buildSmallInfo()),
           ],
         ),
       ),

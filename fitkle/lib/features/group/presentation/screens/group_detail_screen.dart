@@ -43,6 +43,10 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
       ref
           .read(groupDetailProvider(widget.groupId).notifier)
           .loadGroup(widget.groupId);
+      // 조회수 증가 (세션당 한 번만)
+      ref
+          .read(groupDetailProvider(widget.groupId).notifier)
+          .incrementViewCount(widget.groupId);
     });
   }
 
@@ -93,7 +97,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
             if (context.canPop()) {
               context.pop();
             } else {
-              context.go('/groups');
+              context.go('/home');
             }
           },
           actions: [

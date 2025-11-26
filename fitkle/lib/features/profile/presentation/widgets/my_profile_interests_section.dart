@@ -87,7 +87,7 @@ class MyProfileInterestsSection extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: AppTheme.primary,
+                    color: Colors.black,
                   ),
                 ),
               )).toList(),

@@ -7,11 +7,13 @@ abstract class EventRepository {
     String? category,
     String? searchQuery,
     bool? isGroupEvent,
+    int limit = 30,
+    int offset = 0,
   });
 
   Future<Either<Failure, EventEntity>> getEventById(String eventId);
 
-  Future<Either<Failure, List<EventEntity>>> getUpcomingEvents();
+  Future<Either<Failure, List<EventEntity>>> getUpcomingEventsByMember(String memberId);
 
   Future<Either<Failure, List<EventEntity>>> getEventsByHost(String hostId);
 
@@ -24,4 +26,6 @@ abstract class EventRepository {
   Future<Either<Failure, void>> joinEvent(String eventId, String userId);
 
   Future<Either<Failure, void>> leaveEvent(String eventId, String userId);
+
+  Future<void> incrementViewCount(String eventId);
 }

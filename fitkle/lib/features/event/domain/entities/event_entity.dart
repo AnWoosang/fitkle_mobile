@@ -24,6 +24,7 @@ class EventEntity extends Equatable {
   final double? longitude;
   final List<String> tags;
   final bool isGroupMembersOnly;
+  final int viewCount;
 
   const EventEntity({
     required this.id,
@@ -47,6 +48,7 @@ class EventEntity extends Equatable {
     this.longitude,
     this.tags = const [],
     this.isGroupMembersOnly = false,
+    this.viewCount = 0,
   });
 
   bool get isFull => attendees >= maxAttendees;
@@ -74,5 +76,6 @@ class EventEntity extends Equatable {
         longitude,
         tags,
         isGroupMembersOnly,
+        viewCount,
       ];
 }

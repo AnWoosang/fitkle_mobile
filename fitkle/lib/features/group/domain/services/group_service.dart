@@ -11,10 +11,14 @@ class GroupService {
   Future<Either<Failure, List<GroupEntity>>> getGroups({
     String? category,
     String? searchQuery,
+    int limit = 30,
+    int offset = 0,
   }) async {
     return await _repository.getGroups(
       category: category,
       searchQuery: searchQuery,
+      limit: limit,
+      offset: offset,
     );
   }
 
@@ -24,6 +28,10 @@ class GroupService {
 
   Future<Either<Failure, List<GroupEntity>>> getGroupsByHost(String hostId) async {
     return await _repository.getGroupsByHost(hostId);
+  }
+
+  Future<Either<Failure, List<GroupEntity>>> getGroupsByMember(String memberId) async {
+    return await _repository.getGroupsByMember(memberId);
   }
 
   Future<Either<Failure, GroupEntity>> createGroup(GroupEntity group) async {
@@ -44,5 +52,9 @@ class GroupService {
 
   Future<Either<Failure, void>> leaveGroup(String groupId, String userId) async {
     return await _repository.leaveGroup(groupId, userId);
+  }
+
+  Future<void> incrementViewCount(String groupId) async {
+    await _repository.incrementViewCount(groupId);
   }
 }

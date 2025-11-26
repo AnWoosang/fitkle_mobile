@@ -4,7 +4,7 @@ import 'package:fitkle/core/theme/app_theme.dart';
 import 'package:fitkle/features/group/presentation/widgets/group_card.dart';
 import 'package:fitkle/features/group/domain/entities/group_entity.dart';
 
-class MyProfileGroupsSection extends StatelessWidget {
+class MyProfileGroupsSection extends StatefulWidget {
   final List<GroupEntity> groups;
   final int totalJoinedGroups;
 
@@ -13,6 +13,20 @@ class MyProfileGroupsSection extends StatelessWidget {
     required this.groups,
     required this.totalJoinedGroups,
   });
+
+  @override
+  State<MyProfileGroupsSection> createState() => _MyProfileGroupsSectionState();
+}
+
+class _MyProfileGroupsSectionState extends State<MyProfileGroupsSection> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,29 +65,17 @@ class MyProfileGroupsSection extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '내 그룹',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          '만든 것 ${groups.length}개 · 가입한 것 $totalJoinedGroups개',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.mutedForeground,
-                          ),
-                        ),
-                      ],
+                  const Expanded(
+                    child: Text(
+                      '내 그룹',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   GestureDetector(
                     onTap: () {
-                      context.push('/groups/create');
+                      context.push('/my-groups');
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -86,19 +88,19 @@ class MyProfileGroupsSection extends StatelessWidget {
                       ),
                       child: const Row(
                         children: [
-                          Icon(
-                            Icons.add,
-                            size: 16,
-                            color: AppTheme.primary,
-                          ),
-                          SizedBox(width: 4),
                           Text(
-                            '만들기',
+                            'View All',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: AppTheme.primary,
                             ),
+                          ),
+                          SizedBox(width: 4),
+                          Icon(
+                            Icons.chevron_right,
+                            size: 16,
+                            color: AppTheme.primary,
                           ),
                         ],
                       ),
@@ -109,63 +111,64 @@ class MyProfileGroupsSection extends StatelessWidget {
             ),
 
             // Groups List
-            if (groups.isNotEmpty) ...[
+            if (widget.groups.isNotEmpty) ...[
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: EdgeInsets.zero,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.61,
+                child: SizedBox(
+                  height: 660, // 그룹 카드 2개 높이 (각 320px + 간격 20px)
+                  child: PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentPage = index;
+                      });
+                    },
+                    itemCount: (widget.groups.length / 2).ceil(), // 2개씩 묶어서 페이지 수 계산
+                    itemBuilder: (context, pageIndex) {
+                      final startIndex = pageIndex * 2;
+                      final endIndex = (startIndex + 2).clamp(0, widget.groups.length);
+                      final pageGroups = widget.groups.sublist(startIndex, endIndex);
+
+                      return Column(
+                        children: pageGroups.map((group) =>
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 20),
+                            child: GroupCard(
+                              group: group,
+                              size: GroupCardSize.small,
+                            ),
+                          ),
+                        ).toList(),
+                      );
+                    },
                   ),
-                  itemCount: groups.length,
-                  itemBuilder: (context, index) {
-                    return GroupCard(
-                      group: groups[index],
-                      size: GroupCardSize.small,
-                    );
-                  },
                 ),
               ),
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: () {
-                  context.push('/my-groups');
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.muted.withValues(alpha: 0.2),
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(24),
-                      bottomRight: Radius.circular(24),
-                    ),
-                  ),
-                  child: const Row(
+              const SizedBox(height: 16),
+              // Page Indicator
+              if ((widget.groups.length / 2).ceil() > 1)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '전체보기',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primary,
+                    children: List.generate(
+                      (widget.groups.length / 2).ceil(),
+                      (index) => Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: _currentPage == index ? 20 : 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: _currentPage == index
+                              ? AppTheme.primary
+                              : AppTheme.primary.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                       ),
-                      SizedBox(width: 4),
-                      Icon(
-                        Icons.chevron_right,
-                        size: 16,
-                        color: AppTheme.primary,
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
+                )
+              else
+                const SizedBox(height: 20),
             ] else
               _buildEmptyState(context),
           ],

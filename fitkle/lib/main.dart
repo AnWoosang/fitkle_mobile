@@ -9,6 +9,7 @@ import 'core/router/app_router.dart';
 import 'core/error/error_handler.dart';
 import 'core/error/error_widget.dart';
 import 'core/utils/app_debug.dart';
+import 'features/auth/presentation/providers/auth_provider.dart';
 
 void main() async {
   // Run app in error zone to catch all errors
@@ -55,8 +56,22 @@ void main() async {
   );
 }
 
-class FitkleApp extends StatelessWidget {
+class FitkleApp extends ConsumerStatefulWidget {
   const FitkleApp({super.key});
+
+  @override
+  ConsumerState<FitkleApp> createState() => _FitkleAppState();
+}
+
+class _FitkleAppState extends ConsumerState<FitkleApp> {
+  @override
+  void initState() {
+    super.initState();
+    // 앱 시작 시 현재 사용자 로드
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(authProvider.notifier).loadCurrentUser();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
