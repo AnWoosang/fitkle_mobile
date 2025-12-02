@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fitkle/core/theme/app_theme.dart';
+import 'package:fitkle/shared/widgets/user_avatar.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class MyProfileHeader extends StatelessWidget {
@@ -45,15 +46,6 @@ class MyProfileHeader extends StatelessWidget {
                 height: 112,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppTheme.primary,
-                      AppTheme.primary.withValues(alpha: 0.9),
-                      AppTheme.primary.withValues(alpha: 0.8),
-                    ],
-                  ),
                   boxShadow: [
                     BoxShadow(
                       color: AppTheme.primary.withValues(alpha: 0.3),
@@ -61,20 +53,12 @@ class MyProfileHeader extends StatelessWidget {
                       offset: const Offset(0, 8),
                     ),
                   ],
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 4,
-                  ),
                 ),
-                child: Center(
-                  child: Text(
-                    profile['name'][0].toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                    ),
-                  ),
+                child: UserAvatar(
+                  avatarUrl: profile['avatarUrl'],
+                  size: 112,
+                  backgroundColor: AppTheme.primary,
+                  iconColor: Colors.white,
                 ),
               ),
               Positioned(

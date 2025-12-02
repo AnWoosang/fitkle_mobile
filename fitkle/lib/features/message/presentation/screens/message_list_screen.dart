@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fitkle/core/theme/app_theme.dart';
+import 'package:fitkle/shared/widgets/user_avatar.dart';
 
 class MessageListScreen extends StatefulWidget {
   const MessageListScreen({super.key});
@@ -17,7 +18,7 @@ class _MessageListScreenState extends State<MessageListScreen> {
     {
       'id': '1',
       'userName': 'Sarah Kim',
-      'userInitials': 'SK',
+      'avatarUrl': null,
       'lastMessage': '내일 브런치 모임 참석하시나요?',
       'timestamp': '오후 3:30',
       'unread': 2,
@@ -26,7 +27,7 @@ class _MessageListScreenState extends State<MessageListScreen> {
     {
       'id': '2',
       'userName': 'Mike Johnson',
-      'userInitials': 'MJ',
+      'avatarUrl': null,
       'lastMessage': '사진 공유해주셔서 감사합니다!',
       'timestamp': '오후 2:15',
       'unread': 0,
@@ -35,7 +36,7 @@ class _MessageListScreenState extends State<MessageListScreen> {
     {
       'id': '3',
       'userName': 'Yuki Tanaka',
-      'userInitials': 'YT',
+      'avatarUrl': null,
       'lastMessage': '다음 주 일정 어떠세요?',
       'timestamp': '오전 11:20',
       'unread': 1,
@@ -44,7 +45,7 @@ class _MessageListScreenState extends State<MessageListScreen> {
     {
       'id': '4',
       'userName': 'Emma Wilson',
-      'userInitials': 'EW',
+      'avatarUrl': null,
       'lastMessage': '좋은 정보 감사해요',
       'timestamp': '어제',
       'unread': 0,
@@ -53,7 +54,7 @@ class _MessageListScreenState extends State<MessageListScreen> {
     {
       'id': '5',
       'userName': 'Li Wei',
-      'userInitials': 'LW',
+      'avatarUrl': null,
       'lastMessage': '한국어 공부 도와주실 수 있나요?',
       'timestamp': '어제',
       'unread': 3,
@@ -189,17 +190,9 @@ class _MessageListScreenState extends State<MessageListScreen> {
                                 // Avatar with online indicator
                                 Stack(
                                   children: [
-                                    CircleAvatar(
-                                      radius: 28,
-                                      backgroundColor: AppTheme.primary,
-                                      child: Text(
-                                        message['userInitials'],
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
-                                      ),
+                                    UserAvatar(
+                                      avatarUrl: message['avatarUrl'],
+                                      size: 56,
                                     ),
                                     if (message['online'])
                                       Positioned(

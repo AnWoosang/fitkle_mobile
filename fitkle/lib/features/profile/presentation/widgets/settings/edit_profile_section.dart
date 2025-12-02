@@ -1,17 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:fitkle/core/theme/app_theme.dart';
+import 'package:fitkle/shared/widgets/user_avatar.dart';
+import 'package:fitkle/shared/widgets/text_input_field.dart';
+import 'package:fitkle/shared/widgets/selection_field.dart';
 
 class EditProfileSection extends StatelessWidget {
   final String name;
   final String location;
   final String birthdate;
   final String gender;
-  final List<String> selectedGoals;
-  final List<Map<String, String>> goals;
+  final String? avatarUrl;
+  final bool isNicknameEditable;
+  final List<String> selectedPreferences; // preference IDs
+  final List<String> selectedInterests; // interest names
   final Function(String) onNameChanged;
-  final Function(String) onBirthdateChanged;
-  final Function(String) onGenderChanged;
-  final Function(String) onToggleGoal;
+  final VoidCallback onNameTap;
+  final VoidCallback onAvatarTap;
+  final VoidCallback onPreferencesTap;
+  final VoidCallback onInterestsTap;
+  final String Function(String) getPreferenceName;
+  final String Function(String) getPreferenceEmoji;
+  final String Function(String) getInterestEmoji;
 
   const EditProfileSection({
     super.key,
@@ -19,12 +28,18 @@ class EditProfileSection extends StatelessWidget {
     required this.location,
     required this.birthdate,
     required this.gender,
-    required this.selectedGoals,
-    required this.goals,
+    this.avatarUrl,
+    required this.isNicknameEditable,
+    required this.selectedPreferences,
+    required this.selectedInterests,
     required this.onNameChanged,
-    required this.onBirthdateChanged,
-    required this.onGenderChanged,
-    required this.onToggleGoal,
+    required this.onNameTap,
+    required this.onAvatarTap,
+    required this.onPreferencesTap,
+    required this.onInterestsTap,
+    required this.getPreferenceName,
+    required this.getPreferenceEmoji,
+    required this.getInterestEmoji,
   });
 
   @override
@@ -62,6 +77,7 @@ class EditProfileSection extends StatelessWidget {
                 'This information will appear on your public profile',
                 style: TextStyle(
                   color: AppTheme.mutedForeground,
+                  fontSize: 12
                 ),
               ),
             ],
@@ -80,8 +96,8 @@ class EditProfileSection extends StatelessWidget {
           const Text(
             'Basic Information',
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontSize: 19,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 24),
@@ -92,13 +108,7 @@ class EditProfileSection extends StatelessWidget {
 
           // Location
           _buildLocationField(),
-          const SizedBox(height: 24),
-          const Divider(),
-          const SizedBox(height: 24),
-
-          // Private Information
-          _buildPrivateInfoHeader(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           // Birthdate
           _buildBirthdateField(),
@@ -124,54 +134,45 @@ class EditProfileSection extends StatelessWidget {
         const Text(
           'Profile Photo',
           style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontSize: 19,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.foreground
           ),
         ),
         const SizedBox(height: 16),
-        Stack(
-          children: [
-            Container(
-              width: 128,
-              height: 128,
-              decoration: BoxDecoration(
-                color: Colors.pink[100],
-                shape: BoxShape.circle,
+        GestureDetector(
+          onTap: onAvatarTap,
+          child: Stack(
+            children: [
+              UserAvatar(
+                avatarUrl: avatarUrl,
+                size: 112,
               ),
-              child: const Center(
-                child: Text(
-                  'T',
-                  style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.edit,
+                    size: 16,
+                    color: Colors.white,
                   ),
                 ),
               ),
-            ),
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppTheme.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 8,
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.edit,
-                  size: 16,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -184,11 +185,12 @@ class EditProfileSection extends StatelessWidget {
         RichText(
           text: const TextSpan(
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 15,
               color: AppTheme.foreground,
+              fontWeight: FontWeight.w600
             ),
             children: [
-              TextSpan(text: 'Name'),
+              TextSpan(text: 'Nickname'),
               TextSpan(
                 text: ' *',
                 style: TextStyle(color: Colors.red),
@@ -197,26 +199,41 @@ class EditProfileSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        TextField(
-          controller: TextEditingController(text: name),
-          onChanged: onNameChanged,
-          decoration: InputDecoration(
-            hintText: 'Enter your name',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppTheme.border, width: 2),
+        const Text(
+          'Can only be changed once every 30 days',
+          style: TextStyle(
+            fontSize: 12,
+            color: AppTheme.mutedForeground,
+          ),
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: isNicknameEditable ? onNameTap : null,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isNicknameEditable ? Colors.white : Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.border),
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppTheme.border, width: 2),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    name.isNotEmpty ? name : 'Enter your nickname',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: name.isNotEmpty ? AppTheme.foreground : AppTheme.mutedForeground,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.chevron_right,
+                  color: isNicknameEditable ? AppTheme.mutedForeground : Colors.grey[300],
+                ),
+              ],
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppTheme.primary, width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            filled: true,
-            fillColor: Colors.grey[50],
           ),
         ),
       ],
@@ -228,63 +245,31 @@ class EditProfileSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Your Location',
+          'Location',
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 15,
+            color: AppTheme.foreground,
+            fontWeight: FontWeight.w600
           ),
         ),
         const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey[50],
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppTheme.border),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.location_on, color: AppTheme.primary, size: 20),
-              const SizedBox(width: 12),
-              Expanded(child: Text(location)),
-            ],
-          ),
+        TextInputField(
+          controller: TextEditingController(text: location),
+          readOnly: true,
+          enabled: false,
+          prefixIcon: const Icon(Icons.location_on, color: AppTheme.mutedForeground, size: 18),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 6),
         TextButton.icon(
           onPressed: () {},
-          icon: const Icon(Icons.edit, size: 16),
-          label: const Text('Edit address'),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPrivateInfoHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Private Information',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        RichText(
-          text: const TextSpan(
+          icon: const Icon(Icons.edit, size: 15),
+          label: const Text(
+            'Edit address',
             style: TextStyle(
               fontSize: 14,
-              color: AppTheme.mutedForeground,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.primary
             ),
-            children: [
-              TextSpan(text: 'This helps with recommendations. Gender and Birthdate '),
-              TextSpan(
-                text: 'will not',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              TextSpan(text: ' appear on your public profile.'),
-            ],
           ),
         ),
       ],
@@ -299,48 +284,62 @@ class EditProfileSection extends StatelessWidget {
           children: [
             const Text(
               'Birthdate',
-              style: TextStyle(fontSize: 16),
+              style: TextStyle(
+                fontSize: 15,
+                color: AppTheme.foreground,
+                fontWeight: FontWeight.w600
+              ),
             ),
             const SizedBox(width: 8),
             Icon(Icons.info_outline, size: 16, color: AppTheme.mutedForeground),
           ],
         ),
         const SizedBox(height: 8),
-        TextField(
-          controller: TextEditingController(text: birthdate),
-          onChanged: onBirthdateChanged,
-          decoration: InputDecoration(
-            hintText: 'MM/DD/YYYY',
-            suffixIcon: const Icon(Icons.calendar_today, size: 20),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppTheme.border, width: 2),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppTheme.border, width: 2),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppTheme.primary, width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            filled: true,
-            fillColor: Colors.grey[50],
+        TextInputField(
+          controller: TextEditingController(text: birthdate.isNotEmpty ? birthdate : 'Not set'),
+          readOnly: true,
+          enabled: false,
+          prefixIcon: const Icon(Icons.calendar_today, size: 16, color: AppTheme.mutedForeground),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Birthdate cannot be changed',
+          style: TextStyle(
+            fontSize: 12,
+            color: AppTheme.mutedForeground,
           ),
         ),
-        if (birthdate.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: () => onBirthdateChanged(''),
-            child: const Text('Clear'),
-          ),
-        ],
       ],
     );
   }
 
   Widget _buildGenderField() {
+    String getGenderDisplay(String genderValue) {
+      switch (genderValue) {
+        case 'male':
+          return 'Male';
+        case 'female':
+          return 'Female';
+        case 'non-binary':
+          return 'Non-binary';
+        case 'prefer-not-to-say':
+          return 'Prefer not to say';
+        default:
+          return 'Not set';
+      }
+    }
+
+    IconData getGenderIcon(String genderValue) {
+      switch (genderValue) {
+        case 'male':
+          return Icons.male;
+        case 'female':
+          return Icons.female;
+        default:
+          return Icons.person;
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -348,39 +347,34 @@ class EditProfileSection extends StatelessWidget {
           children: [
             const Text(
               'Gender',
-              style: TextStyle(fontSize: 16),
+              style: TextStyle(
+                fontSize: 15,
+                color: AppTheme.foreground,
+                fontWeight: FontWeight.w600
+              ),
             ),
             const SizedBox(width: 8),
-            Icon(Icons.info_outline, size: 16, color: AppTheme.mutedForeground),
+            Icon(Icons.info_outline, size: 14, color: AppTheme.mutedForeground),
           ],
         ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: gender,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppTheme.border, width: 2),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppTheme.border, width: 2),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppTheme.primary, width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            filled: true,
-            fillColor: Colors.grey[50],
+        TextInputField(
+          controller: TextEditingController(text: getGenderDisplay(gender)),
+          readOnly: true,
+          enabled: false,
+          prefixIcon: Icon(
+            getGenderIcon(gender),
+            size: 20,
+            color: AppTheme.mutedForeground,
           ),
-          items: const [
-            DropdownMenuItem(value: 'male', child: Text('Male')),
-            DropdownMenuItem(value: 'female', child: Text('Female')),
-            DropdownMenuItem(value: 'non-binary', child: Text('Non-binary')),
-            DropdownMenuItem(value: 'prefer-not-to-say', child: Text('Prefer not to say')),
-          ],
-          onChanged: (value) => onGenderChanged(value!),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Gender cannot be changed',
+          style: TextStyle(
+            fontSize: 12,
+            color: AppTheme.mutedForeground,
+          ),
         ),
       ],
     );
@@ -390,67 +384,41 @@ class EditProfileSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'What are you looking for?',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: goals.map((goal) {
-            final isSelected = selectedGoals.contains(goal['id']);
-            return GestureDetector(
-              onTap: () => onToggleGoal(goal['id'] as String),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppTheme.primary.withValues(alpha: 0.1) : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected ? AppTheme.primary : AppTheme.border,
-                    width: 2,
-                  ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 4,
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      goal['emoji'] as String,
-                      style: const TextStyle(fontSize: 20),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      goal['label'] as String,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: isSelected ? AppTheme.primary : AppTheme.foreground,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.add,
-                      size: 16,
-                      color: isSelected ? AppTheme.primary : AppTheme.foreground,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-        ),
+        // Preferences Section
+        _buildCompactPreferencesSection(),
+
+        const SizedBox(height: 24),
+        const Divider(),
+        const SizedBox(height: 24),
+
+        // Interests Section
+        _buildCompactInterestsSection(),
       ],
     );
   }
+
+  Widget _buildCompactPreferencesSection() {
+    return SelectionField(
+      title: 'My Preferences',
+      description: 'Select categories to personalize your experience',
+      selectedItemIds: selectedPreferences,
+      getItemName: getPreferenceName,
+      getItemEmoji: getPreferenceEmoji,
+      onTap: onPreferencesTap,
+      emptyMessage: 'No preferences selected',
+    );
+  }
+
+  Widget _buildCompactInterestsSection() {
+    return SelectionField(
+      title: 'Interests',
+      description: 'Select your interests to personalize your experience',
+      selectedItemIds: selectedInterests,
+      getItemName: (interest) => interest,
+      getItemEmoji: getInterestEmoji,
+      onTap: onInterestsTap,
+      emptyMessage: 'No interests selected',
+    );
+  }
+
 }

@@ -74,26 +74,14 @@ class InterestService {
     }
   }
 
-  /// 사용자의 관심사 업데이트
-  Future<void> updateMemberInterests(String userId, List<String> interestIds) async {
+  /// 사용자의 관심사 업데이트 (RPC 트랜잭션)
+  Future<void> updateMemberInterests(String memberId, List<String> interestIds) async {
     try {
-      // 기존 관심사 삭제
-      await _supabase
-          .from('member_interests')
-          .delete()
-          .eq('user_id', userId);
-
-      // 새로운 관심사 추가
-      if (interestIds.isNotEmpty) {
-        final data = interestIds
-            .map((interestId) => {
-                  'user_id': userId,
-                  'interest_id': interestId,
-                })
-            .toList();
-
-        await _supabase.from('member_interests').insert(data);
-      }
+      // RPC 함수를 사용하여 트랜잭션으로 처리
+      await _supabase.rpc('update_member_interests', params: {
+        'p_member_id': memberId,
+        'p_interest_ids': interestIds,
+      });
     } catch (e) {
       print('Error updating member interests: $e');
       rethrow;

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fitkle/features/member/domain/entities/member_entity.dart';
 import 'package:fitkle/features/member/domain/repositories/member_repository.dart';
 import 'package:fitkle/features/member/domain/services/member_service.dart';
+import 'package:fitkle/features/member/domain/services/preference_service.dart';
 import 'package:fitkle/features/member/data/datasources/member_remote_datasource.dart';
 import 'package:fitkle/features/member/data/repositories/member_repository_impl.dart';
 import 'package:fitkle/core/config/supabase_client.dart';
@@ -30,8 +31,15 @@ final memberRepositoryProvider = Provider<MemberRepository>((ref) {
 });
 
 // Services
+final preferenceServiceProvider = Provider<PreferenceService>((ref) {
+  return PreferenceService();
+});
+
 final memberServiceProvider = Provider<MemberService>((ref) {
-  return MemberService(ref.watch(memberRepositoryProvider));
+  return MemberService(
+    ref.watch(memberRepositoryProvider),
+    ref.watch(preferenceServiceProvider),
+  );
 });
 
 // ============================================================================

@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:fitkle/features/member/domain/enums/gender.dart';
 import 'package:fitkle/features/member/domain/enums/country.dart';
 import 'package:fitkle/features/member/domain/models/interest.dart';
+import 'package:fitkle/features/member/domain/models/preference.dart';
 
 /// Member entity matching Supabase 'member' table
 class MemberEntity extends Equatable {
@@ -12,6 +13,7 @@ class MemberEntity extends Equatable {
   final Gender? gender;
   final String? avatarUrl;
   final String? bio;
+  final DateTime? birthdate;
   final String location;
   final Country nationality;
   final int hostedEvents;
@@ -33,6 +35,9 @@ class MemberEntity extends Equatable {
   // User interests (from member_interests join table)
   final List<Interest> interests;
 
+  // User preferences (from member_preference join table)
+  final List<Preference> preferences;
+
   const MemberEntity({
     required this.id,
     required this.email,
@@ -41,6 +46,7 @@ class MemberEntity extends Equatable {
     this.gender,
     this.avatarUrl,
     this.bio,
+    this.birthdate,
     required this.location,
     required this.nationality,
     this.hostedEvents = 0,
@@ -57,6 +63,7 @@ class MemberEntity extends Equatable {
     this.linkedinHandle,
     this.emailHandle,
     this.interests = const [],
+    this.preferences = const [],
   });
 
   /// 표시용 이름 (nickname이 없으면 email 앞부분 사용)
@@ -89,6 +96,7 @@ class MemberEntity extends Equatable {
         gender,
         avatarUrl,
         bio,
+        birthdate,
         location,
         nationality,
         hostedEvents,
@@ -105,5 +113,6 @@ class MemberEntity extends Equatable {
         linkedinHandle,
         emailHandle,
         interests,
+        preferences,
       ];
 }

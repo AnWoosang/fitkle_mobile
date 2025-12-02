@@ -13,6 +13,7 @@ abstract class MemberRemoteDataSource {
   Future<bool> checkNicknameAvailability(String nickname);
   Future<bool> checkEmailAvailability(String email);
   Future<List<MemberModel>> getAllMembers({int limit = 50, int offset = 0});
+  Future<MemberModel> patchMemberField(String memberId, Map<String, dynamic> updates);
 }
 
 class MemberRemoteDataSourceImpl implements MemberRemoteDataSource {
@@ -29,6 +30,9 @@ class MemberRemoteDataSourceImpl implements MemberRemoteDataSource {
             *,
             interests:member_interests(
               interest:interests(*)
+            ),
+            preferences:member_preference(
+              preference(*)
             )
           ''')
           .eq('id', memberId)
@@ -41,6 +45,14 @@ class MemberRemoteDataSourceImpl implements MemberRemoteDataSource {
         transformedResponse['interests'] = (response['interests'] as List)
             .map((mi) => mi['interest'])
             .where((i) => i != null)
+            .toList();
+      }
+
+      // Transform nested preferences structure to flat array
+      if (response['preferences'] != null && response['preferences'] is List) {
+        transformedResponse['preferences'] = (response['preferences'] as List)
+            .map((mp) => mp['preference'])
+            .where((p) => p != null)
             .toList();
       }
 
@@ -59,6 +71,9 @@ class MemberRemoteDataSourceImpl implements MemberRemoteDataSource {
             *,
             interests:member_interests(
               interest:interests(*)
+            ),
+            preferences:member_preference(
+              preference(*)
             )
           ''')
           .eq('email', email)
@@ -71,6 +86,14 @@ class MemberRemoteDataSourceImpl implements MemberRemoteDataSource {
         transformedResponse['interests'] = (response['interests'] as List)
             .map((mi) => mi['interest'])
             .where((i) => i != null)
+            .toList();
+      }
+
+      // Transform nested preferences structure to flat array
+      if (response['preferences'] != null && response['preferences'] is List) {
+        transformedResponse['preferences'] = (response['preferences'] as List)
+            .map((mp) => mp['preference'])
+            .where((p) => p != null)
             .toList();
       }
 
@@ -144,19 +167,28 @@ class MemberRemoteDataSourceImpl implements MemberRemoteDataSource {
             *,
             interests:member_interests(
               interest:interests(*)
+            ),
+            preferences:member_preference(
+              preference(*)
             )
           ''')
           .or('nickname.ilike.%$query%,email.ilike.%$query%')
           .isFilter('deleted_at', null)
           .limit(20);
 
-      // Transform nested interests structure to flat array for each member
+      // Transform nested interests and preferences structure to flat array for each member
       return (response as List).map((memberJson) {
         final Map<String, dynamic> transformed = Map.from(memberJson);
         if (memberJson['interests'] != null && memberJson['interests'] is List) {
           transformed['interests'] = (memberJson['interests'] as List)
               .map((mi) => mi['interest'])
               .where((i) => i != null)
+              .toList();
+        }
+        if (memberJson['preferences'] != null && memberJson['preferences'] is List) {
+          transformed['preferences'] = (memberJson['preferences'] as List)
+              .map((mp) => mp['preference'])
+              .where((p) => p != null)
               .toList();
         }
         return MemberModel.fromJson(transformed);
@@ -209,13 +241,16 @@ class MemberRemoteDataSourceImpl implements MemberRemoteDataSource {
             *,
             interests:member_interests(
               interest:interests(*)
+            ),
+            preferences:member_preference(
+              preference(*)
             )
           ''')
           .isFilter('deleted_at', null)
           .order('created_at', ascending: false)
           .range(offset, offset + limit - 1);
 
-      // Transform nested interests structure to flat array for each member
+      // Transform nested interests and preferences structure to flat array for each member
       return (response as List).map((memberJson) {
         final Map<String, dynamic> transformed = Map.from(memberJson);
         if (memberJson['interests'] != null && memberJson['interests'] is List) {
@@ -224,10 +259,63 @@ class MemberRemoteDataSourceImpl implements MemberRemoteDataSource {
               .where((i) => i != null)
               .toList();
         }
+        if (memberJson['preferences'] != null && memberJson['preferences'] is List) {
+          transformed['preferences'] = (memberJson['preferences'] as List)
+              .map((mp) => mp['preference'])
+              .where((p) => p != null)
+              .toList();
+        }
         return MemberModel.fromJson(transformed);
       }).toList();
     } catch (e) {
       throw ServerException('Failed to get members: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<MemberModel> patchMemberField(String memberId, Map<String, dynamic> updates) async {
+    try {
+      // Add updated_at timestamp
+      final updateData = {
+        ...updates,
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      final response = await supabaseClient
+          .from('member')
+          .update(updateData)
+          .eq('id', memberId)
+          .select('''
+            *,
+            interests:member_interests(
+              interest:interests(*)
+            ),
+            preferences:member_preference(
+              preference(*)
+            )
+          ''')
+          .single();
+
+      // Transform nested interests structure to flat array
+      final Map<String, dynamic> transformedResponse = Map.from(response);
+      if (response['interests'] != null && response['interests'] is List) {
+        transformedResponse['interests'] = (response['interests'] as List)
+            .map((mi) => mi['interest'])
+            .where((i) => i != null)
+            .toList();
+      }
+
+      // Transform nested preferences structure to flat array
+      if (response['preferences'] != null && response['preferences'] is List) {
+        transformedResponse['preferences'] = (response['preferences'] as List)
+            .map((mp) => mp['preference'])
+            .where((p) => p != null)
+            .toList();
+      }
+
+      return MemberModel.fromJson(transformedResponse);
+    } catch (e) {
+      throw ServerException('Failed to update member field: ${e.toString()}');
     }
   }
 }

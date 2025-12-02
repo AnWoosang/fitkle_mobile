@@ -22,10 +22,10 @@ class GenderOption extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? AppTheme.primary.withValues(alpha: 0.1) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected ? AppTheme.primary : AppTheme.border,
             width: 2,
@@ -36,13 +36,13 @@ class GenderOption extends StatelessWidget {
             Icon(
               icon,
               color: isSelected ? AppTheme.primary : AppTheme.mutedForeground,
-              size: 32,
+              size: 24,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 color: isSelected ? AppTheme.primary : AppTheme.mutedForeground,
               ),

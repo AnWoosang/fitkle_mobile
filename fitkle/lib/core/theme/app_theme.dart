@@ -19,6 +19,7 @@ class AppTheme {
   static const Color secondaryForeground = Color(0xFF1A1A1A); // #1a1a1a
   static const Color muted = Color(0xFFF5F2F7); // #f5f2f7
   static const Color mutedForeground = Color(0xFF6B6B6B); // #6b6b6b
+  static const Color placeholder = Color(0xFFA8A8A8); // #a8a8a8 - 힌트 텍스트용 (더 연한 회색)
   static const Color accent = Color(0xFFFFF0F7); // #fff0f7
   static const Color accentForeground = Color(0xFF1A1A1A); // #1a1a1a
 

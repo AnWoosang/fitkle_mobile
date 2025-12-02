@@ -1,28 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:fitkle/core/theme/app_theme.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class SocialMediaSection extends StatelessWidget {
+  final String email;
   final String facebook;
   final String instagram;
   final String twitter;
   final String linkedin;
-  final Function(String) onFacebookChanged;
-  final Function(String) onInstagramChanged;
-  final Function(String) onTwitterChanged;
-  final Function(String) onLinkedinChanged;
-  final VoidCallback onSave;
+  final VoidCallback onEmailTap;
+  final VoidCallback onFacebookTap;
+  final VoidCallback onInstagramTap;
+  final VoidCallback onTwitterTap;
+  final VoidCallback onLinkedinTap;
 
   const SocialMediaSection({
     super.key,
+    required this.email,
     required this.facebook,
     required this.instagram,
     required this.twitter,
     required this.linkedin,
-    required this.onFacebookChanged,
-    required this.onInstagramChanged,
-    required this.onTwitterChanged,
-    required this.onLinkedinChanged,
-    required this.onSave,
+    required this.onEmailTap,
+    required this.onFacebookTap,
+    required this.onInstagramTap,
+    required this.onTwitterTap,
+    required this.onLinkedinTap,
   });
 
   @override
@@ -60,6 +63,7 @@ class SocialMediaSection extends StatelessWidget {
                 'Connect your social accounts to display on your profile',
                 style: TextStyle(
                   color: AppTheme.mutedForeground,
+                  fontSize: 12
                 ),
               ),
             ],
@@ -68,88 +72,79 @@ class SocialMediaSection extends StatelessWidget {
           const Divider(),
           const SizedBox(height: 24),
 
+          // Email
+          _buildSocialField(
+            'Email',
+            email,
+            onEmailTap,
+            'Your contact email (can be same as login email or a different one)',
+            const Color(0xFF6B7280),
+            FontAwesomeIcons.envelope,
+          ),
+          const SizedBox(height: 24),
+          const Divider(),
+          const SizedBox(height: 24),
+
           // Facebook
-          _buildSocialInput(
+          _buildSocialField(
             'Facebook',
             facebook,
-            onFacebookChanged,
-            'your_facebook_name',
+            onFacebookTap,
             'https://facebook.com/your_facebook_name',
             const Color(0xFF1877F2),
-            Icons.facebook,
+            FontAwesomeIcons.facebook,
           ),
           const SizedBox(height: 24),
           const Divider(),
           const SizedBox(height: 24),
 
           // Instagram
-          _buildSocialInput(
+          _buildSocialField(
             'Instagram',
             instagram,
-            onInstagramChanged,
-            '@your_instagram_name',
+            onInstagramTap,
             'https://instagram.com/your_instagram_name or @username',
             Colors.pink,
-            Icons.camera_alt,
+            FontAwesomeIcons.instagram,
           ),
           const SizedBox(height: 24),
           const Divider(),
           const SizedBox(height: 24),
 
           // Twitter
-          _buildSocialInput(
+          _buildSocialField(
             'Twitter',
             twitter,
-            onTwitterChanged,
-            '@Your_Twitter_Name',
+            onTwitterTap,
             'https://twitter.com/Your_Twitter_Name or @username',
             const Color(0xFF1DA1F2),
-            Icons.flutter_dash,
+            FontAwesomeIcons.twitter,
           ),
           const SizedBox(height: 24),
           const Divider(),
           const SizedBox(height: 24),
 
           // LinkedIn
-          _buildSocialInput(
+          _buildSocialField(
             'LinkedIn',
             linkedin,
-            onLinkedinChanged,
-            'yourlinkedinname',
+            onLinkedinTap,
             'https://linkedin.com/in/yourlinkedinname',
             const Color(0xFF0A66C2),
-            Icons.work,
-          ),
-          const SizedBox(height: 24),
-          const Divider(),
-          const SizedBox(height: 24),
-
-          // Save Button
-          Align(
-            alignment: Alignment.centerRight,
-            child: ElevatedButton(
-              onPressed: onSave,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              ),
-              child: const Text('Save Changes'),
-            ),
+            FontAwesomeIcons.linkedin,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSocialInput(
+  Widget _buildSocialField(
     String label,
     String value,
-    Function(String) onChanged,
-    String placeholder,
+    VoidCallback onTap,
     String helperText,
     Color iconColor,
-    IconData icon,
+    IconData faIcon,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,53 +152,73 @@ class SocialMediaSection extends StatelessWidget {
         Row(
           children: [
             Container(
-              width: 32,
-              height: 32,
+              width: 28,
+              height: 28,
               decoration: BoxDecoration(
-                color: iconColor,
-                shape: BoxShape.circle,
+                color: iconColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 4,
+                  ),
+                ],
               ),
-              child: Icon(icon, size: 16, color: Colors.white),
+              child: Center(
+                child: FaIcon(
+                  faIcon,
+                  size: 16,
+                  color: iconColor,
+                ),
+              ),
             ),
             const SizedBox(width: 8),
             Text(
               label,
               style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.foreground,
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: TextEditingController(text: value),
-          onChanged: onChanged,
-          decoration: InputDecoration(
-            hintText: placeholder,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppTheme.border, width: 2),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppTheme.border, width: 2),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppTheme.primary, width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            filled: true,
-            fillColor: Colors.grey[50],
-          ),
         ),
         const SizedBox(height: 8),
         Text(
           helperText,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             color: AppTheme.mutedForeground,
+          ),
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.border),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    value.isNotEmpty ? value : 'Not set',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: value.isNotEmpty ? AppTheme.foreground : AppTheme.mutedForeground,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.chevron_right,
+                  color: AppTheme.mutedForeground,
+                ),
+              ],
+            ),
           ),
         ),
       ],

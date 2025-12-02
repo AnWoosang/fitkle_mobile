@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fitkle/core/theme/app_theme.dart';
+import 'package:fitkle/shared/widgets/user_avatar.dart';
 
 class HostCard extends StatelessWidget {
   final String? hostName;
   final String? hostCountry;
   final String? hostBio;
   final String? hostId;
+  final String? avatarUrl;
   final int? eventsHosted;
   final int? totalGuests;
   final String? activeSince;
@@ -17,6 +19,7 @@ class HostCard extends StatelessWidget {
     this.hostCountry,
     this.hostBio,
     this.hostId,
+    this.avatarUrl,
     this.eventsHosted,
     this.totalGuests,
     this.activeSince,
@@ -49,17 +52,9 @@ class HostCard extends StatelessWidget {
               children: [
                 Stack(
                   children: [
-                    CircleAvatar(
-                      radius: 32,
-                      backgroundColor: AppTheme.primary,
-                      child: Text(
-                        displayName[0].toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    UserAvatar(
+                      avatarUrl: avatarUrl,
+                      size: 64,
                     ),
                     Positioned(
                       bottom: 0,

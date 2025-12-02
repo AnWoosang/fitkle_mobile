@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fitkle/core/theme/app_theme.dart';
 import 'package:fitkle/shared/widgets/speed_dial_fab.dart';
+import 'package:fitkle/shared/widgets/user_avatar.dart';
+import 'package:fitkle/features/auth/presentation/providers/auth_provider.dart';
+import 'package:fitkle/features/member/presentation/providers/member_provider.dart';
+import 'package:fitkle/shared/providers/toast_provider.dart';
 
-class MainLayout extends StatefulWidget {
+class MainLayout extends ConsumerStatefulWidget {
   final Widget child;
   final int currentIndex;
 
@@ -14,11 +19,22 @@ class MainLayout extends StatefulWidget {
   });
 
   @override
-  State<MainLayout> createState() => _MainLayoutState();
+  ConsumerState<MainLayout> createState() => _MainLayoutState();
 }
 
-class _MainLayoutState extends State<MainLayout> {
+class _MainLayoutState extends ConsumerState<MainLayout> {
   void _onItemTapped(int index) {
+    // 프로필 탭인 경우 로그인 상태 확인
+    if (index == 4) {
+      final isAuthenticated = ref.read(isAuthenticatedProvider);
+      if (isAuthenticated) {
+        context.go('/profile');
+      } else {
+        context.go('/login');
+      }
+      return;
+    }
+
     switch (index) {
       case 0:
         context.go('/home');
@@ -31,9 +47,6 @@ class _MainLayoutState extends State<MainLayout> {
         break;
       case 3:
         context.go('/messages');
-        break;
-      case 4:
-        context.go('/profile');
         break;
     }
   }
@@ -55,6 +68,74 @@ class _MainLayoutState extends State<MainLayout> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen to toast messages
+    ref.listen<ToastMessage?>(toastProvider, (previous, next) {
+      if (next != null) {
+        // Get color based on toast type
+        Color backgroundColor;
+        switch (next.type) {
+          case ToastType.error:
+            backgroundColor = AppTheme.destructive;
+            break;
+          case ToastType.success:
+            backgroundColor = Colors.green;
+            break;
+          case ToastType.warning:
+            backgroundColor = Colors.orange;
+            break;
+          case ToastType.info:
+            backgroundColor = AppTheme.foreground;
+            break;
+        }
+
+        // Use Overlay to show toast above everything including modals
+        final overlay = Overlay.of(context);
+        OverlayEntry? overlayEntry;
+
+        overlayEntry = OverlayEntry(
+          builder: (context) => Positioned(
+            bottom: 80,
+            left: 16,
+            right: 16,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: backgroundColor,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  next.message,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        overlay.insert(overlayEntry);
+
+        // Remove overlay after duration
+        Future.delayed(const Duration(seconds: 2), () {
+          overlayEntry?.remove();
+          ref.read(toastProvider.notifier).clear();
+        });
+      }
+    });
+
     return Scaffold(
       body: widget.child,
       floatingActionButton: _shouldShowFab()
@@ -85,43 +166,41 @@ class _MainLayoutState extends State<MainLayout> {
           ],
         ),
         child: SafeArea(
-          child: SizedBox(
-            height: 60,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
+          child: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: SizedBox(
+              height: 62,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
                 _buildNavItem(
                   icon: Icons.home_outlined,
                   activeIcon: Icons.home,
-                  label: '홈',
+                  label: 'Home',
                   index: 0,
                 ),
                 _buildNavItem(
                   icon: Icons.search,
                   activeIcon: Icons.search,
-                  label: '탐색',
+                  label: 'Explore',
                   index: 1,
                 ),
                 _buildNavItem(
                   icon: Icons.groups_outlined,
                   activeIcon: Icons.groups,
-                  label: '그룹',
+                  label: 'Groups',
                   index: 2,
                 ),
                 _buildNavItem(
                   icon: Icons.chat_bubble_outline,
                   activeIcon: Icons.chat_bubble,
-                  label: '메시지',
+                  label: 'Messages',
                   index: 3,
                 ),
-                _buildNavItem(
-                  icon: Icons.person_outline,
-                  activeIcon: Icons.person,
-                  label: '프로필',
-                  index: 4,
-                ),
+                _buildProfileNavItem(),
               ],
             ),
+          ),
           ),
         ),
       ),
@@ -139,7 +218,7 @@ class _MainLayoutState extends State<MainLayout> {
     return Expanded(
       child: InkWell(
         onTap: () => _onItemTapped(index),
-        child: Container(
+        child: SizedBox(
           height: 60,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -152,6 +231,69 @@ class _MainLayoutState extends State<MainLayout> {
               const SizedBox(height: 4),
               Text(
                 label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                  color: isActive ? AppTheme.primary : AppTheme.mutedForeground,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileNavItem() {
+    final isActive = widget.currentIndex == 4;
+    final isAuthenticated = ref.watch(isAuthenticatedProvider);
+    final currentMemberAsync = ref.watch(currentMemberProvider);
+
+    // 로그인된 경우 아바타 표시, 아니면 아이콘 표시
+    Widget iconWidget;
+    if (isAuthenticated) {
+      iconWidget = currentMemberAsync.when(
+        data: (member) => SizedBox(
+          width: 24,
+          height: 24,
+          child: UserAvatar(
+            avatarUrl: member?.avatarUrl,
+            size: 24,
+            backgroundColor: isActive ? AppTheme.primary.withValues(alpha: 0.1) : Colors.grey[200],
+            iconColor: isActive ? AppTheme.primary : AppTheme.mutedForeground,
+          ),
+        ),
+        loading: () => Icon(
+          Icons.person_outline,
+          size: 24,
+          color: isActive ? AppTheme.primary : AppTheme.mutedForeground,
+        ),
+        error: (_, __) => Icon(
+          Icons.person_outline,
+          size: 24,
+          color: isActive ? AppTheme.primary : AppTheme.mutedForeground,
+        ),
+      );
+    } else {
+      iconWidget = Icon(
+        isActive ? Icons.login : Icons.login_outlined,
+        size: 24,
+        color: isActive ? AppTheme.primary : AppTheme.mutedForeground,
+      );
+    }
+
+    return Expanded(
+      child: InkWell(
+        onTap: () => _onItemTapped(4),
+        child: SizedBox(
+          height: 60,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              iconWidget,
+              const SizedBox(height: 4),
+              Text(
+                isAuthenticated ? 'My' : 'Login',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,

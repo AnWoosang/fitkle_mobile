@@ -2,6 +2,7 @@ import 'package:fitkle/features/member/domain/entities/member_entity.dart';
 import 'package:fitkle/features/member/domain/enums/gender.dart';
 import 'package:fitkle/features/member/domain/enums/country.dart';
 import 'package:fitkle/features/member/domain/models/interest.dart';
+import 'package:fitkle/features/member/domain/models/preference.dart';
 
 class MemberModel {
   final String id;
@@ -11,6 +12,7 @@ class MemberModel {
   final String? gender; // DB에서 문자열로 저장 (예: 'male', 'female', 'other')
   final String? avatarUrl;
   final String? bio;
+  final DateTime? birthdate;
   final String location;
   final String nationality; // DB에서 문자열 코드로 저장 (예: 'KR', 'US', 'JP')
   final int hostedEvents;
@@ -30,6 +32,9 @@ class MemberModel {
   // User interests (from member_interests join)
   final List<Interest> interests;
 
+  // User preferences (from member_preference join)
+  final List<Preference> preferences;
+
   const MemberModel({
     required this.id,
     required this.email,
@@ -38,6 +43,7 @@ class MemberModel {
     this.gender,
     this.avatarUrl,
     this.bio,
+    this.birthdate,
     required this.location,
     required this.nationality,
     this.hostedEvents = 0,
@@ -54,6 +60,7 @@ class MemberModel {
     this.linkedinHandle,
     this.emailHandle,
     this.interests = const [],
+    this.preferences = const [],
   });
 
   factory MemberModel.fromJson(Map<String, dynamic> json) {
@@ -65,6 +72,14 @@ class MemberModel {
           .toList();
     }
 
+    // Parse preferences from join query result
+    List<Preference> parsedPreferences = [];
+    if (json['preferences'] != null && json['preferences'] is List) {
+      parsedPreferences = (json['preferences'] as List)
+          .map((preferenceJson) => Preference.fromJson(preferenceJson as Map<String, dynamic>))
+          .toList();
+    }
+
     return MemberModel(
       id: json['id'] as String,
       email: json['email'] as String,
@@ -73,6 +88,9 @@ class MemberModel {
       gender: json['gender'] as String?, // DB에서 그대로 문자열로 받음
       avatarUrl: json['avatar_url'] as String?,
       bio: json['bio'] as String?,
+      birthdate: json['birthdate'] != null
+          ? DateTime.parse(json['birthdate'] as String)
+          : null,
       location: json['location'] as String,
       nationality: json['nationality'] as String, // DB에서 그대로 문자열 코드로 받음
       hostedEvents: (json['hosted_events'] as num?)?.toInt() ?? 0,
@@ -93,6 +111,7 @@ class MemberModel {
       linkedinHandle: json['linkedin_handle'] as String?,
       emailHandle: json['email_handle'] as String?,
       interests: parsedInterests,
+      preferences: parsedPreferences,
     );
   }
 
@@ -105,6 +124,7 @@ class MemberModel {
       'gender': gender, // 문자열 그대로 저장
       'avatar_url': avatarUrl,
       'bio': bio,
+      'birthdate': birthdate?.toIso8601String().split('T')[0], // DATE 타입은 날짜만
       'location': location,
       'nationality': nationality, // 문자열 코드 그대로 저장
       'hosted_events': hostedEvents,
@@ -132,6 +152,7 @@ class MemberModel {
       'gender': gender, // 문자열 그대로
       'avatar_url': avatarUrl,
       'bio': bio,
+      'birthdate': birthdate?.toIso8601String().split('T')[0], // DATE 타입은 날짜만
       'location': location,
       'nationality': nationality, // 문자열 코드 그대로
       'facebook_handle': facebookHandle,
@@ -150,6 +171,7 @@ class MemberModel {
       'gender': gender, // 문자열 그대로
       'avatar_url': avatarUrl,
       'bio': bio,
+      'birthdate': birthdate?.toIso8601String().split('T')[0], // DATE 타입은 날짜만
       'location': location,
       'nationality': nationality, // 문자열 코드 그대로
       'facebook_handle': facebookHandle,
@@ -171,6 +193,7 @@ class MemberModel {
       gender: Gender.fromDatabaseValue(gender), // String → Gender enum
       avatarUrl: avatarUrl,
       bio: bio,
+      birthdate: birthdate,
       location: location,
       nationality: Country.fromCode(nationality) ?? Country.southKorea, // String → Country enum
       hostedEvents: hostedEvents,
@@ -187,6 +210,7 @@ class MemberModel {
       linkedinHandle: linkedinHandle,
       emailHandle: emailHandle,
       interests: interests, // Interest 객체는 그대로 전달
+      preferences: preferences, // Preference 객체는 그대로 전달
     );
   }
 
@@ -201,6 +225,7 @@ class MemberModel {
       gender: entity.gender?.toDatabaseValue(), // Gender enum → String
       avatarUrl: entity.avatarUrl,
       bio: entity.bio,
+      birthdate: entity.birthdate,
       location: entity.location,
       nationality: entity.nationality.code, // Country enum → String
       hostedEvents: entity.hostedEvents,
@@ -217,6 +242,7 @@ class MemberModel {
       linkedinHandle: entity.linkedinHandle,
       emailHandle: entity.emailHandle,
       interests: entity.interests, // Interest 객체는 그대로 전달
+      preferences: entity.preferences, // Preference 객체는 그대로 전달
     );
   }
 
@@ -229,6 +255,7 @@ class MemberModel {
     String? gender, // String 타입으로 변경
     String? avatarUrl,
     String? bio,
+    DateTime? birthdate,
     String? location,
     String? nationality, // String 타입으로 변경
     int? hostedEvents,
@@ -245,6 +272,7 @@ class MemberModel {
     String? linkedinHandle,
     String? emailHandle,
     List<Interest>? interests,
+    List<Preference>? preferences,
   }) {
     return MemberModel(
       id: id ?? this.id,
@@ -254,6 +282,7 @@ class MemberModel {
       gender: gender ?? this.gender,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       bio: bio ?? this.bio,
+      birthdate: birthdate ?? this.birthdate,
       location: location ?? this.location,
       nationality: nationality ?? this.nationality,
       hostedEvents: hostedEvents ?? this.hostedEvents,
@@ -270,6 +299,7 @@ class MemberModel {
       linkedinHandle: linkedinHandle ?? this.linkedinHandle,
       emailHandle: emailHandle ?? this.emailHandle,
       interests: interests ?? this.interests,
+      preferences: preferences ?? this.preferences,
     );
   }
 }

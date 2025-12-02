@@ -87,7 +87,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
             print('  - Bio: ${member.bio}');
             print('  - Interests: ${member.interests.length}개');
             for (var interest in member.interests) {
-              print('    * ${interest.emoji} ${interest.nameKo} (${interest.code})');
+              print('    * ${interest.emoji} ${interest.name} (${interest.code})');
             }
             print('  - Total RSVPs: ${member.totalRsvps}');
             print('  - Hosted Events: ${member.hostedEvents}');
@@ -114,6 +114,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
               'nationalityEnum': member.nationality,
               'gender': member.gender?.nameEn,
               'bio': member.bio ?? '',
+              'avatarUrl': member.avatarUrl,
               'attendanceRate': 95, // TODO: 실제 출석률 계산
               'totalRSVPs': member.totalRsvps,
               'groups': 0, // TODO: 실제 그룹 수
@@ -127,7 +128,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
 
             // member interests를 문자열 리스트로 변환 (화면 표시용)
             final displayInterests = member.interests
-                .map((interest) => '${interest.emoji} ${interest.nameEn}')
+                .map((interest) => '${interest.emoji} ${interest.name}')
                 .toList();
 
             return SingleChildScrollView(

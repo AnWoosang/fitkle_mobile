@@ -1,347 +1,140 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fitkle/core/theme/app_theme.dart';
 import 'package:fitkle/features/profile/presentation/widgets/settings/edit_profile_section.dart';
 import 'package:fitkle/features/profile/presentation/widgets/settings/account_management_section.dart';
 import 'package:fitkle/features/profile/presentation/widgets/settings/social_media_section.dart';
-import 'package:fitkle/features/profile/presentation/widgets/settings/interests_section.dart';
+import 'package:fitkle/features/profile/presentation/screens/mixins/settings_state_manager.dart';
+import 'package:fitkle/features/profile/presentation/screens/mixins/settings_modal_handlers.dart';
+import 'package:fitkle/features/member/presentation/providers/account_setting_provider.dart';
+import 'package:fitkle/features/member/domain/enums/language.dart';
+import 'package:fitkle/shared/providers/toast_provider.dart';
 
 enum SettingSection {
   editProfile,
   accountManagement,
   socialMedia,
-  interests,
 }
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
-  SettingSection activeSection = SettingSection.editProfile;
+class _SettingsScreenState extends ConsumerState<SettingsScreen>
+    with SingleTickerProviderStateMixin, SettingsStateManager, SettingsModalHandlers {
+  late TabController _tabController;
 
-  // Edit Profile State
-  String name = 'Tony';
-  String location = 'Seoul, Korea (South)';
-  String birthdate = '10/02/1997';
-  String gender = 'male';
-  List<String> selectedGoals = [];
+  @override
+  void initState() {
+    super.initState();
+    // TabController 초기화
+    _tabController = TabController(length: 3, vsync: this);
 
-  // Account State
-  String language = 'english';
-  String contactPermission = 'anyone';
+    // 탭 변경 리스너 추가 (탭 전환 시 Account Settings 자동 저장)
+    _tabController.addListener(_onTabChanged);
 
-  // Social Media State
-  String facebook = '';
-  String instagram = '';
-  String twitter = '';
-  String linkedin = '';
-
-  // Interests State
-  List<String> selectedInterests = ['Outdoors', 'New In Town', 'Make New Friends', 'Fun Times', 'Social Networking'];
-  String notificationRadius = '50 mi';
-  String interestSearchQuery = '';
-
-  final goals = [
-    {'id': 'hobbies', 'label': 'Practice Hobbies', 'emoji': '🎨'},
-    {'id': 'socialize', 'label': 'Socialize', 'emoji': '💬'},
-    {'id': 'friends', 'label': 'Make Friends', 'emoji': '🙌'},
-    {'id': 'network', 'label': 'Professionally Network', 'emoji': '💼'},
-  ];
-
-  final allInterestsWithEmoji = [
-    {'label': 'Social', 'emoji': '🎉'},
-    {'label': 'Professional Networking', 'emoji': '💼'},
-    {'label': 'Book Club', 'emoji': '📚'},
-    {'label': 'Adventure', 'emoji': '🏔️'},
-    {'label': 'Writing and Publishing', 'emoji': '✍️'},
-    {'label': 'Painting', 'emoji': '🎨'},
-    {'label': 'Pickup Soccer', 'emoji': '⚽'},
-    {'label': 'Social Justice', 'emoji': '✊'},
-    {'label': 'Camping', 'emoji': '⛺'},
-    {'label': 'Group Singing', 'emoji': '🎤'},
-    {'label': 'Family Friendly', 'emoji': '👨‍👩‍👧'},
-    {'label': 'Outdoor Fitness', 'emoji': '🏃'},
-    {'label': 'Eco-Conscious', 'emoji': '🌱'},
-    {'label': 'Stress Relief', 'emoji': '😌'},
-    {'label': 'Game Night', 'emoji': '🎲'},
-    {'label': 'Psychic', 'emoji': '🔮'},
-    {'label': 'Vinyasa Yoga', 'emoji': '🧘'},
-    {'label': 'Birds', 'emoji': '🦜'},
-    {'label': 'Walking Tours', 'emoji': '🚶'},
-    {'label': 'Guided Meditation', 'emoji': '🧘‍♀️'},
-    {'label': 'New Parents', 'emoji': '👶'},
-    {'label': 'Support', 'emoji': '🤝'},
-    {'label': 'Breathing Meditation', 'emoji': '💨'},
-    {'label': 'Roleplaying Games (RPGs)', 'emoji': '🎭'},
-    {'label': 'Yoga', 'emoji': '🧘‍♂️'},
-    {'label': 'International Travel', 'emoji': '✈️'},
-    {'label': 'Soccer', 'emoji': '⚽'},
-    {'label': 'Acoustic Music', 'emoji': '🎸'},
-    {'label': 'Social Innovation', 'emoji': '💡'},
-    {'label': 'Outdoors', 'emoji': '🌲'},
-    {'label': 'New In Town', 'emoji': '🗺️'},
-    {'label': 'Make New Friends', 'emoji': '👥'},
-    {'label': 'Fun Times', 'emoji': '🎊'},
-    {'label': 'Social Networking', 'emoji': '🤝'}
-  ];
-
-  void toggleGoal(String goalId) {
-    setState(() {
-      if (selectedGoals.contains(goalId)) {
-        selectedGoals.remove(goalId);
-      } else {
-        selectedGoals.add(goalId);
-      }
-    });
+    // 멤버 데이터 로드
+    loadMemberData();
   }
 
-  void toggleInterest(String interest) {
-    setState(() {
-      if (selectedInterests.contains(interest)) {
-        selectedInterests.remove(interest);
-      } else {
-        selectedInterests.add(interest);
-      }
-    });
+  void _onTabChanged() {
+    // Account 탭(index 1)에서 다른 탭으로 이동할 때 저장
+    if (_tabController.previousIndex == 1 && _tabController.index != 1) {
+      saveAccountSettings();
+    }
   }
 
-  String getInterestEmoji(String label) {
-    final interest = allInterestsWithEmoji.firstWhere(
-      (i) => i['label'] == label,
-      orElse: () => {'label': label, 'emoji': '⭐'},
-    );
-    return interest['emoji'] as String;
-  }
-
-  List<Map<String, String>> get filteredInterests {
-    return allInterestsWithEmoji
-        .where((interest) =>
-            !selectedInterests.contains(interest['label']) &&
-            (interest['label'] as String)
-                .toLowerCase()
-                .contains(interestSearchQuery.toLowerCase()))
-        .toList();
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 1024;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
 
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            if (isMobile) _buildMobileHeader(),
-            if (isMobile) _buildMobileTabs(),
-            Expanded(
-              child: isMobile
-                  ? _buildMobileContent()
-                  : _buildDesktopLayout(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+        // 페이지를 벗어날 때 Account Settings 저장
+        await saveAccountSettings();
 
-  Widget _buildMobileHeader() {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: AppTheme.border),
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Icon(Icons.arrow_back, size: 20),
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Text(
-            '설정',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMobileTabs() {
-    final menuItems = [
-      {'id': SettingSection.editProfile, 'label': 'Edit Profile', 'icon': Icons.person},
-      {'id': SettingSection.accountManagement, 'label': 'Account', 'icon': Icons.settings},
-      {'id': SettingSection.socialMedia, 'label': 'Social Media', 'icon': Icons.share},
-      {'id': SettingSection.interests, 'label': 'Interests', 'icon': Icons.favorite_border},
-    ];
-
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: AppTheme.border, width: 0.5),
-        ),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Row(
-          children: menuItems.map((item) {
-            final isActive = activeSection == item['id'];
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: GestureDetector(
-                onTap: () => setState(() => activeSection = item['id'] as SettingSection),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isActive ? Colors.grey[800] : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        item['icon'] as IconData,
-                        size: 16,
-                        color: isActive ? Colors.white : Colors.grey[700],
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        item['label'] as String,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: isActive ? Colors.white : Colors.grey[700],
-                        ),
-                      ),
-                    ],
-                  ),
+        if (context.mounted) {
+          context.pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.background,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Header Bar
+              _buildHeader(context),
+              // Tab Bar
+              _buildTabs(),
+              // Tab View Content
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: _buildEditProfileSection(),
+                    ),
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: _buildAccountManagementSection(),
+                    ),
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: _buildSocialMediaSection(),
+                    ),
+                  ],
                 ),
               ),
-            );
-          }).toList(),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildMobileContent() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: _renderContent(),
-    );
-  }
-
-  Widget _buildDesktopLayout() {
-    return Row(
-      children: [
-        _buildDesktopSidebar(),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(48),
-            child: _renderContent(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDesktopSidebar() {
-    final menuItems = [
-      {'id': SettingSection.editProfile, 'label': 'Edit Profile', 'icon': Icons.person},
-      {'id': SettingSection.accountManagement, 'label': 'Account', 'icon': Icons.settings},
-      {'id': SettingSection.socialMedia, 'label': 'Social Media', 'icon': Icons.share},
-      {'id': SettingSection.interests, 'label': 'Interests', 'icon': Icons.favorite_border},
-    ];
-
+  Widget _buildHeader(BuildContext context) {
     return Container(
-      width: 288,
-      decoration: const BoxDecoration(
+      height: 56,
+      decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
-          right: BorderSide(color: AppTheme.border),
+          bottom: BorderSide(color: AppTheme.border, width: 1),
         ),
       ),
-      child: Column(
+      child: Stack(
         children: [
-          // Back button
-          Container(
-            decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: AppTheme.border),
-              ),
-            ),
-            padding: const EdgeInsets.all(24),
-            child: GestureDetector(
-              onTap: () => context.pop(),
-              child: Row(
-                children: [
-                  const Icon(Icons.arrow_back, size: 20, color: AppTheme.mutedForeground),
-                  const SizedBox(width: 8),
-                  Text(
-                    '뒤로 가기',
-                    style: TextStyle(
-                      color: AppTheme.mutedForeground,
-                    ),
-                  ),
-                ],
-              ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () async {
+                await saveAccountSettings();
+                if (context.mounted) {
+                  context.pop();
+                }
+              },
             ),
           ),
-          // Menu items
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Column(
-              children: menuItems.map((item) {
-                final isActive = activeSection == item['id'];
-                return GestureDetector(
-                  onTap: () => setState(() => activeSection = item['id'] as SettingSection),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: isActive ? AppTheme.primary.withValues(alpha: 0.05) : Colors.transparent,
-                      border: Border(
-                        left: BorderSide(
-                          color: isActive ? AppTheme.primary : Colors.transparent,
-                          width: 4,
-                        ),
-                      ),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    child: Row(
-                      children: [
-                        Icon(
-                          item['icon'] as IconData,
-                          size: 20,
-                          color: isActive ? AppTheme.primary : AppTheme.mutedForeground,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          item['label'] as String,
-                          style: TextStyle(
-                            color: isActive ? AppTheme.primary : AppTheme.foreground,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
+          const Align(
+            alignment: Alignment.center,
+            child: Text(
+              '설정',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -349,55 +142,293 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _renderContent() {
-    switch (activeSection) {
-      case SettingSection.editProfile:
-        return EditProfileSection(
-          name: name,
-          location: location,
-          birthdate: birthdate,
-          gender: gender,
-          selectedGoals: selectedGoals,
-          goals: goals,
-          onNameChanged: (value) => setState(() => name = value),
-          onBirthdateChanged: (value) => setState(() => birthdate = value),
-          onGenderChanged: (value) => setState(() => gender = value),
-          onToggleGoal: toggleGoal,
-        );
-      case SettingSection.accountManagement:
+  Widget _buildTabs() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: AppTheme.border, width: 1),
+        ),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicator: const BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: AppTheme.foreground,
+              width: 2,
+            ),
+          ),
+        ),
+        labelColor: AppTheme.foreground,
+        unselectedLabelColor: AppTheme.mutedForeground,
+        labelStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.normal,
+        ),
+        dividerColor: AppTheme.border,
+        isScrollable: true,
+        tabAlignment: TabAlignment.start,
+        tabs: const [
+          Tab(text: 'Edit Profile'),
+          Tab(text: 'Account'),
+          Tab(text: 'Social Media'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEditProfileSection() {
+    final selectedPreferenceIds = memberPreferences.map((p) => p.id).toList();
+    final selectedInterestNames = memberInterests.map((i) => i.name).toList();
+
+    return EditProfileSection(
+      name: name,
+      location: location,
+      birthdate: birthdate,
+      gender: gender,
+      avatarUrl: avatarUrl,
+      isNicknameEditable: isNicknameEditable,
+      selectedPreferences: selectedPreferenceIds,
+      selectedInterests: selectedInterestNames,
+      onNameChanged: (value) => setState(() => name = value),
+      onNameTap: () => openNicknameModal(context),
+      onAvatarTap: () => openProfilePictureModal(context),
+      onPreferencesTap: () => openPreferencesModal(context),
+      onInterestsTap: () => openInterestsModal(context),
+      getPreferenceName: (id) {
+        try {
+          final preference = memberPreferences.firstWhere((p) => p.id == id);
+          return preference.name;
+        } catch (e) {
+          return '';
+        }
+      },
+      getPreferenceEmoji: (id) {
+        try {
+          final preference = memberPreferences.firstWhere((p) => p.id == id);
+          return preference.emoji;
+        } catch (e) {
+          return '⭐';
+        }
+      },
+      getInterestEmoji: (name) {
+        try {
+          final interest = allInterests.firstWhere((i) => i.name == name);
+          return interest.emoji ?? '⭐';
+        } catch (e) {
+          return '⭐';
+        }
+      },
+    );
+  }
+
+  Widget _buildAccountManagementSection() {
+    final accountSettingsAsync = ref.watch(accountSettingNotifierProvider);
+
+    return accountSettingsAsync.when(
+      data: (accountSettings) {
+        if (accountSettings == null) {
+          return const Center(child: Text('Failed to load account settings'));
+        }
+
         return AccountManagementSection(
-          language: language,
-          contactPermission: contactPermission,
-          onLanguageChanged: (value) => setState(() => language = value),
-          onContactPermissionChanged: (value) => setState(() => contactPermission = value),
+          accountSettings: accountSettings.copyWith(
+            language: currentLanguage,
+            contactPermission: currentContactPermission,
+            emailNotifications: currentEmailNotifications,
+            pushNotifications: currentPushNotifications,
+            eventReminders: currentEventReminders,
+            groupUpdates: currentGroupUpdates,
+            newsletterSubscription: currentNewsletterSubscription,
+            theme: currentTheme,
+          ),
+          onLanguageChanged: (languageCode) async {
+            // Check if there's a change
+            if (languageCode == currentLanguage) {
+              return;
+            }
+
+            setState(() => currentLanguage = languageCode);
+
+            try {
+              // 즉시 저장
+              await ref.read(accountSettingNotifierProvider.notifier).updateLanguage(languageCode);
+              if (mounted) {
+                final language = Language.fromCode(languageCode);
+                ref.read(toastProvider.notifier).showSuccess(
+                  'Language changed to ${language?.nameEn ?? languageCode}'
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                ref.read(toastProvider.notifier).showError('Failed to update language');
+              }
+            }
+          },
+          onContactPermissionChanged: (permission) async {
+            // Check if there's a change
+            if (permission == currentContactPermission) {
+              return;
+            }
+
+            setState(() => currentContactPermission = permission);
+
+            try {
+              // 즉시 저장
+              await ref.read(accountSettingNotifierProvider.notifier).updateContactPermission(permission);
+              if (mounted) {
+                String permissionText = permission.toDatabaseValue().replaceAll('_', ' ');
+                permissionText = permissionText[0].toUpperCase() + permissionText.substring(1);
+                ref.read(toastProvider.notifier).showSuccess(
+                  'Contact permission changed to $permissionText'
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                ref.read(toastProvider.notifier).showError('Failed to update contact permission');
+              }
+            }
+          },
+          onEmailNotificationsChanged: (value) async {
+            setState(() => currentEmailNotifications = value);
+            try {
+              // 즉시 저장 (개별 필드만 업데이트)
+              await ref.read(accountSettingNotifierProvider.notifier).updateNotificationSettings(
+                emailNotifications: value,
+              );
+              if (mounted) {
+                ref.read(toastProvider.notifier).showSuccess(
+                  value ? 'Email notifications enabled' : 'Email notifications disabled'
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                ref.read(toastProvider.notifier).showError('Failed to update email notifications');
+              }
+            }
+          },
+          onPushNotificationsChanged: (value) async {
+            setState(() => currentPushNotifications = value);
+            try {
+              // 즉시 저장 (개별 필드만 업데이트)
+              await ref.read(accountSettingNotifierProvider.notifier).updateNotificationSettings(
+                pushNotifications: value,
+              );
+              if (mounted) {
+                ref.read(toastProvider.notifier).showSuccess(
+                  value ? 'Push notifications enabled' : 'Push notifications disabled'
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                ref.read(toastProvider.notifier).showError('Failed to update push notifications');
+              }
+            }
+          },
+          onEventRemindersChanged: (value) async {
+            setState(() => currentEventReminders = value);
+            try {
+              // 즉시 저장 (개별 필드만 업데이트)
+              await ref.read(accountSettingNotifierProvider.notifier).updateNotificationSettings(
+                eventReminders: value,
+              );
+              if (mounted) {
+                ref.read(toastProvider.notifier).showSuccess(
+                  value ? 'Event reminders enabled' : 'Event reminders disabled'
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                ref.read(toastProvider.notifier).showError('Failed to update event reminders');
+              }
+            }
+          },
+          onGroupUpdatesChanged: (value) async {
+            setState(() => currentGroupUpdates = value);
+            try {
+              // 즉시 저장 (개별 필드만 업데이트)
+              await ref.read(accountSettingNotifierProvider.notifier).updateNotificationSettings(
+                groupUpdates: value,
+              );
+              if (mounted) {
+                ref.read(toastProvider.notifier).showSuccess(
+                  value ? 'Group updates enabled' : 'Group updates disabled'
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                ref.read(toastProvider.notifier).showError('Failed to update group updates');
+              }
+            }
+          },
+          onNewsletterSubscriptionChanged: (value) async {
+            setState(() => currentNewsletterSubscription = value);
+            try {
+              // 즉시 저장 (개별 필드만 업데이트)
+              await ref.read(accountSettingNotifierProvider.notifier).updateNotificationSettings(
+                newsletterSubscription: value,
+              );
+              if (mounted) {
+                ref.read(toastProvider.notifier).showSuccess(
+                  value ? 'Newsletter subscription enabled' : 'Newsletter subscription disabled'
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                ref.read(toastProvider.notifier).showError('Failed to update newsletter subscription');
+              }
+            }
+          },
+          onThemeChanged: (theme) async {
+            // Check if there's a change
+            if (theme == currentTheme) {
+              return;
+            }
+
+            setState(() => currentTheme = theme);
+
+            try {
+              // 즉시 저장
+              await ref.read(accountSettingNotifierProvider.notifier).updateUISettings(theme: theme);
+              if (mounted) {
+                String themeText = theme.toDatabaseValue();
+                themeText = themeText[0].toUpperCase() + themeText.substring(1);
+                ref.read(toastProvider.notifier).showSuccess(
+                  'Theme changed to $themeText'
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                ref.read(toastProvider.notifier).showError('Failed to update theme');
+              }
+            }
+          },
           onChangePassword: () {},
           onDeleteAccount: () {},
         );
-      case SettingSection.socialMedia:
-        return SocialMediaSection(
-          facebook: facebook,
-          instagram: instagram,
-          twitter: twitter,
-          linkedin: linkedin,
-          onFacebookChanged: (value) => setState(() => facebook = value),
-          onInstagramChanged: (value) => setState(() => instagram = value),
-          onTwitterChanged: (value) => setState(() => twitter = value),
-          onLinkedinChanged: (value) => setState(() => linkedin = value),
-          onSave: () {},
-        );
-      case SettingSection.interests:
-        return InterestsSection(
-          selectedInterests: selectedInterests,
-          notificationRadius: notificationRadius,
-          interestSearchQuery: interestSearchQuery,
-          filteredInterests: filteredInterests,
-          onToggleInterest: toggleInterest,
-          onNotificationRadiusChanged: (value) => setState(() => notificationRadius = value),
-          onSearchQueryChanged: (value) => setState(() => interestSearchQuery = value),
-          onClearAllInterests: () => setState(() => selectedInterests.clear()),
-          onSaveInterests: () {},
-          getInterestEmoji: getInterestEmoji,
-        );
-    }
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(child: Text('Error: $error')),
+    );
+  }
+
+  Widget _buildSocialMediaSection() {
+    return SocialMediaSection(
+      email: email,
+      facebook: facebook,
+      instagram: instagram,
+      twitter: twitter,
+      linkedin: linkedin,
+      onEmailTap: () => openEmailModal(context),
+      onFacebookTap: () => openFacebookModal(context),
+      onInstagramTap: () => openInstagramModal(context),
+      onTwitterTap: () => openTwitterModal(context),
+      onLinkedinTap: () => openLinkedinModal(context),
+    );
   }
 }

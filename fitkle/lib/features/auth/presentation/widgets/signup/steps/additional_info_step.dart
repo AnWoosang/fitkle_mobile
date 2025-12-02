@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:fitkle/core/theme/app_theme.dart';
 import 'package:fitkle/features/member/domain/models/interest.dart';
+import 'package:fitkle/features/member/domain/models/preference.dart';
 import 'package:fitkle/features/member/domain/services/interest_service.dart';
+import 'package:fitkle/features/member/domain/services/preference_service.dart';
+import 'package:fitkle/features/member/domain/enums/gender.dart';
 import 'package:fitkle/features/auth/presentation/widgets/signup/country_search_field.dart';
 import 'package:fitkle/features/auth/presentation/widgets/signup/language_search_field.dart';
-import 'package:fitkle/features/auth/presentation/widgets/signup/selectable_chip.dart';
-import 'package:fitkle/features/auth/presentation/widgets/signup/gender_option.dart';
+import 'package:fitkle/shared/widgets/selectable_option.dart';
 import 'package:fitkle/features/auth/domain/models/signup_data.dart';
+import 'package:fitkle/shared/widgets/selection_field.dart';
+import 'package:fitkle/shared/widgets/selection_modal.dart';
 
 class AdditionalInfoStep extends StatefulWidget {
   final SignupData initialData;
@@ -26,11 +30,18 @@ class _AdditionalInfoStepState extends State<AdditionalInfoStep> {
   late String _nationality;
   late String? _language;
   late String? _gender;
-  late List<Interest> _selectedInterests;
 
+  // Store selected items as names (String) for modal
+  List<String> _selectedInterestNames = [];
+  List<String> _selectedPreferenceNames = [];
+
+  // All available items
   List<Interest> _availableInterests = [];
+  List<Preference> _availablePreferences = [];
   bool _isLoadingInterests = false;
+  bool _isLoadingPreferences = false;
   final InterestService _interestService = InterestService();
+  final PreferenceService _preferenceService = PreferenceService();
 
   @override
   void initState() {
@@ -38,8 +49,17 @@ class _AdditionalInfoStepState extends State<AdditionalInfoStep> {
     _nationality = widget.initialData.nationality;
     _language = widget.initialData.language;
     _gender = widget.initialData.gender;
-    _selectedInterests = List.from(widget.initialData.selectedInterests);
+
+    // Initialize selected names from initial data
+    _selectedInterestNames = widget.initialData.selectedInterests
+        .map((interest) => interest.name)
+        .toList();
+    _selectedPreferenceNames = widget.initialData.selectedPreferences
+        .map((preference) => preference.name)
+        .toList();
+
     _loadInterests();
+    _loadPreferences();
   }
 
   Future<void> _loadInterests() async {
@@ -52,18 +72,83 @@ class _AdditionalInfoStepState extends State<AdditionalInfoStep> {
       });
     } catch (e) {
       setState(() => _isLoadingInterests = false);
-      print('Error loading interests: $e');
     }
   }
 
-  void _toggleInterest(Interest interest) {
-    setState(() {
-      if (_selectedInterests.contains(interest)) {
-        _selectedInterests.remove(interest);
-      } else {
-        _selectedInterests.add(interest);
-      }
-    });
+  Future<void> _loadPreferences() async {
+    setState(() => _isLoadingPreferences = true);
+    try {
+      final preferences = await _preferenceService.getPreferences();
+      setState(() {
+        _availablePreferences = preferences;
+        _isLoadingPreferences = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingPreferences = false);
+    }
+  }
+
+  void _openInterestsModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => SelectionModal(
+        title: 'Select your interests',
+        selectedItems: _selectedInterestNames,
+        allItems: _availableInterests
+            .map((i) => {
+                  'id': i.id,
+                  'label': i.name,
+                  'emoji': i.emoji ?? '⭐',
+                  'category': i.categoryCode,
+                })
+            .toList(),
+        onSave: (selectedNames) {
+          setState(() {
+            _selectedInterestNames = selectedNames;
+          });
+        },
+        getItemEmoji: (name) {
+          final interest = _availableInterests.firstWhere(
+            (i) => i.name == name,
+            orElse: () => _availableInterests.first,
+          );
+          return interest.emoji ?? '⭐';
+        },
+        maxSelection: 10,
+        categoryKey: 'category',
+      ),
+    );
+  }
+
+  void _openPreferencesModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => SelectionModal(
+        title: 'Select your preferred event types',
+        selectedItems: _selectedPreferenceNames,
+        allItems: _availablePreferences
+            .map((p) => {'id': p.id, 'label': p.name, 'emoji': p.emoji})
+            .toList(),
+        onSave: (selectedNames) {
+          setState(() {
+            _selectedPreferenceNames = selectedNames;
+          });
+        },
+        getItemEmoji: (name) {
+          final preference = _availablePreferences.firstWhere(
+            (p) => p.name == name,
+            orElse: () => _availablePreferences.first,
+          );
+          return preference.emoji;
+        },
+        maxSelection: 10,
+        categoryKey: '',
+      ),
+    );
   }
 
   void _handleSubmit() {
@@ -79,16 +164,25 @@ class _AdditionalInfoStepState extends State<AdditionalInfoStep> {
       _showSnackBar('성별을 선택해주세요.');
       return;
     }
-    if (_selectedInterests.isEmpty) {
+    if (_selectedInterestNames.isEmpty) {
       _showSnackBar('관심사를 최소 1개 이상 선택해주세요.');
       return;
     }
+
+    // Convert names back to full objects
+    final selectedInterests = _availableInterests
+        .where((interest) => _selectedInterestNames.contains(interest.name))
+        .toList();
+    final selectedPreferences = _availablePreferences
+        .where((preference) => _selectedPreferenceNames.contains(preference.name))
+        .toList();
 
     final data = widget.initialData.copyWith(
       nationality: _nationality,
       language: _language,
       gender: _gender,
-      selectedInterests: _selectedInterests,
+      selectedInterests: selectedInterests,
+      selectedPreferences: selectedPreferences,
     );
 
     widget.onSubmit(data);
@@ -103,6 +197,7 @@ class _AdditionalInfoStepState extends State<AdditionalInfoStep> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Text(
           '추가 정보 입력',
@@ -137,72 +232,88 @@ class _AdditionalInfoStepState extends State<AdditionalInfoStep> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '성별',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            RichText(
+              text: const TextSpan(
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.foreground,
+                ),
+                children: [
+                  TextSpan(text: '성별'),
+                  TextSpan(
+                    text: ' *',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 12),
             Row(
-              children: [
-                Expanded(
-                  child: GenderOption(
-                    value: 'MALE',
-                    label: 'Male',
-                    icon: Icons.male,
-                    isSelected: _gender == 'MALE',
-                    onTap: () => setState(() => _gender = 'MALE'),
+              children: Gender.values.map((gender) {
+                return Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      right: gender != Gender.values.last ? 12 : 0,
+                    ),
+                    child: SelectableOption(
+                      value: gender.code,
+                      label: gender.nameEn,
+                      icon: gender == Gender.male
+                          ? Icons.male
+                          : gender == Gender.female
+                              ? Icons.female
+                              : Icons.more_horiz,
+                      isSelected: _gender == gender.code,
+                      onTap: () => setState(() => _gender = gender.code),
+                      style: SelectableOptionStyle.primary,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: GenderOption(
-                    value: 'FEMALE',
-                    label: 'Female',
-                    icon: Icons.female,
-                    isSelected: _gender == 'FEMALE',
-                    onTap: () => setState(() => _gender = 'FEMALE'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: GenderOption(
-                    value: 'PREFER_NOT_TO_SAY',
-                    label: 'Other',
-                    icon: Icons.more_horiz,
-                    isSelected: _gender == 'PREFER_NOT_TO_SAY',
-                    onTap: () => setState(() => _gender = 'PREFER_NOT_TO_SAY'),
-                  ),
-                ),
-              ],
+                );
+              }).toList(),
             ),
           ],
         ),
         const SizedBox(height: 24),
 
-        // Interests
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '관심사 (복수 선택 가능)',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            _isLoadingInterests
-                ? const Center(child: CircularProgressIndicator())
-                : Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _availableInterests
-                        .map((interest) => SelectableChip(
-                              label: interest.displayNameEn,
-                              selected: _selectedInterests.contains(interest),
-                              onTap: () => _toggleInterest(interest),
-                            ))
-                        .toList(),
-                  ),
-          ],
-        ),
+        // Interests using SelectionField
+        _isLoadingInterests
+            ? const Center(child: CircularProgressIndicator())
+            : SelectionField(
+                title: '관심사 *',
+                description: '최대 10개까지 선택 가능 (${_selectedInterestNames.length}/10)',
+                selectedItemIds: _selectedInterestNames,
+                getItemName: (name) => name,
+                getItemEmoji: (name) {
+                  final interest = _availableInterests.firstWhere(
+                    (i) => i.name == name,
+                    orElse: () => _availableInterests.first,
+                  );
+                  return interest.emoji ?? '⭐';
+                },
+                onTap: _openInterestsModal,
+                emptyMessage: '관심사를 선택해주세요',
+              ),
+        const SizedBox(height: 24),
+
+        // Preferences using SelectionField
+        _isLoadingPreferences
+            ? const Center(child: CircularProgressIndicator())
+            : SelectionField(
+                title: '내가 찾는 카테고리',
+                description: '최대 10개까지 선택 가능 (${_selectedPreferenceNames.length}/10)',
+                selectedItemIds: _selectedPreferenceNames,
+                getItemName: (name) => name,
+                getItemEmoji: (name) {
+                  final preference = _availablePreferences.firstWhere(
+                    (p) => p.name == name,
+                    orElse: () => _availablePreferences.first,
+                  );
+                  return preference.emoji;
+                },
+                onTap: _openPreferencesModal,
+                emptyMessage: '선호하는 카테고리를 선택해주세요',
+              ),
         const SizedBox(height: 32),
 
         // Submit button
@@ -213,7 +324,7 @@ class _AdditionalInfoStepState extends State<AdditionalInfoStep> {
             onPressed: (_nationality.isNotEmpty &&
                        _language != null &&
                        _gender != null &&
-                       _selectedInterests.isNotEmpty)
+                       _selectedInterestNames.isNotEmpty)
                 ? _handleSubmit
                 : null,
             style: ElevatedButton.styleFrom(

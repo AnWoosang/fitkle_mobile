@@ -2,10 +2,10 @@
 class Interest {
   final String id;
   final String code;
-  final String nameKo;
-  final String nameEn;
+  final String name;
   final String? emoji;
   final String categoryCode;
+  final String categoryName;
   final int sortOrder;
   final bool isActive;
   final DateTime createdAt;
@@ -14,10 +14,10 @@ class Interest {
   Interest({
     required this.id,
     required this.code,
-    required this.nameKo,
-    required this.nameEn,
+    required this.name,
     this.emoji,
     required this.categoryCode,
+    required this.categoryName,
     required this.sortOrder,
     this.isActive = true,
     required this.createdAt,
@@ -28,10 +28,10 @@ class Interest {
     return Interest(
       id: json['id'] as String,
       code: json['code'] as String,
-      nameKo: json['name_ko'] as String,
-      nameEn: json['name_en'] as String,
+      name: json['name'] as String,
       emoji: json['emoji'] as String?,
       categoryCode: json['category_code'] as String,
+      categoryName: json['category_name'] as String,
       sortOrder: json['sort_order'] as int,
       isActive: json['is_active'] as bool? ?? true,
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -43,10 +43,10 @@ class Interest {
     return {
       'id': id,
       'code': code,
-      'name_ko': nameKo,
-      'name_en': nameEn,
+      'name': name,
       'emoji': emoji,
       'category_code': categoryCode,
+      'category_name': categoryName,
       'sort_order': sortOrder,
       'is_active': isActive,
       'created_at': createdAt.toIso8601String(),
@@ -54,15 +54,9 @@ class Interest {
     };
   }
 
-  /// 한국어 표시명 (이모지 포함)
-  String get displayNameKo {
-    if (emoji == null || emoji!.isEmpty) return nameKo;
-    return '$emoji $nameKo';
-  }
-
-  /// 영어 표시명 (이모지 포함)
-  String get displayNameEn {
-    if (emoji == null || emoji!.isEmpty) return nameEn;
-    return '$emoji $nameEn';
+  /// 표시명 (이모지 포함)
+  String get displayName {
+    if (emoji == null || emoji!.isEmpty) return name;
+    return '$emoji $name';
   }
 }

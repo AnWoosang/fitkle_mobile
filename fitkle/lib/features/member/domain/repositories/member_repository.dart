@@ -22,4 +22,6 @@ abstract class MemberRepository {
   Future<Either<Failure, bool>> checkEmailAvailability(String email);
 
   Future<Either<Failure, List<MemberEntity>>> getAllMembers({int limit = 50, int offset = 0});
+
+  Future<Either<Failure, MemberEntity>> patchMemberField(String memberId, Map<String, dynamic> updates);
 }

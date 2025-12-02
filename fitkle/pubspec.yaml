@@ -82,6 +82,7 @@ dependencies:
   visibility_detector: ^0.4.0+2
   lucide_icons: ^0.257.0
   scrollable_positioned_list: ^0.3.8
+  path: ^1.9.1
 
 dev_dependencies:
   flutter_test:

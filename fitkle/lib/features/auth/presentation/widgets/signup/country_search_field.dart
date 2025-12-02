@@ -209,18 +209,30 @@ class _CountrySearchFieldState extends State<CountrySearchField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '국적',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        RichText(
+          text: const TextSpan(
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.foreground,
+            ),
+            children: [
+              TextSpan(text: '국적'),
+              TextSpan(
+                text: ' *',
+                style: TextStyle(color: Colors.red),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 8),
         InkWell(
           onTap: _showCountryPicker,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               border: Border.all(color: AppTheme.border, width: 2),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
@@ -228,13 +240,14 @@ class _CountrySearchFieldState extends State<CountrySearchField> {
                   child: Text(
                     _selectedCountryName ?? '국가를 선택해주세요',
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 14,
                       color: _selectedCountryName != null ? Colors.black : Colors.grey[400],
                     ),
                   ),
                 ),
                 Icon(
                   Icons.arrow_drop_down,
+                  size: 20,
                   color: Colors.grey[600],
                 ),
               ],

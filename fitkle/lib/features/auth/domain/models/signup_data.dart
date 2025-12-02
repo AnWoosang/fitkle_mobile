@@ -1,4 +1,5 @@
 import 'package:fitkle/features/member/domain/models/interest.dart';
+import 'package:fitkle/features/member/domain/models/preference.dart';
 import 'package:fitkle/features/auth/presentation/screens/signup_screen.dart';
 
 /// Model class to hold all signup data across different steps
@@ -25,6 +26,7 @@ class SignupData {
   String? language;
   String? gender; // 'MALE', 'FEMALE', 'PREFER_NOT_TO_SAY'
   List<Interest> selectedInterests;
+  List<Preference> selectedPreferences;
 
   SignupData({
     this.name = '',
@@ -42,6 +44,7 @@ class SignupData {
     this.language,
     this.gender,
     this.selectedInterests = const [],
+    this.selectedPreferences = const [],
   });
 
   SignupData copyWith({
@@ -60,6 +63,7 @@ class SignupData {
     String? language,
     String? gender,
     List<Interest>? selectedInterests,
+    List<Preference>? selectedPreferences,
   }) {
     return SignupData(
       name: name ?? this.name,
@@ -77,6 +81,7 @@ class SignupData {
       language: language ?? this.language,
       gender: gender ?? this.gender,
       selectedInterests: selectedInterests ?? this.selectedInterests,
+      selectedPreferences: selectedPreferences ?? this.selectedPreferences,
     );
   }
 }

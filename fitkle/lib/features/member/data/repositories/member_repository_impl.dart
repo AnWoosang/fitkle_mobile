@@ -161,4 +161,18 @@ class MemberRepositoryImpl implements MemberRepository {
       return const Left(NetworkFailure('No internet connection'));
     }
   }
+
+  @override
+  Future<Either<Failure, MemberEntity>> patchMemberField(String memberId, Map<String, dynamic> updates) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final updatedMember = await remoteDataSource.patchMemberField(memberId, updates);
+        return Right(updatedMember.toEntity());
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      }
+    } else {
+      return const Left(NetworkFailure('No internet connection'));
+    }
+  }
 }
