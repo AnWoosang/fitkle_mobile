@@ -10,8 +10,8 @@ import 'package:fitkle/features/event/presentation/screens/create_event_screen.d
 import 'package:fitkle/features/group/presentation/screens/group_list_screen.dart';
 import 'package:fitkle/features/group/presentation/screens/group_detail_screen.dart';
 import 'package:fitkle/features/group/presentation/screens/create_group_screen.dart';
-import 'package:fitkle/features/message/presentation/screens/message_list_screen.dart';
-import 'package:fitkle/features/message/presentation/screens/chat_screen.dart';
+import 'package:fitkle/features/chat/presentation/screens/message_list_screen.dart';
+import 'package:fitkle/features/chat/presentation/screens/chat_screen.dart';
 import 'package:fitkle/features/profile/presentation/screens/my_profile_screen.dart';
 import 'package:fitkle/features/member/presentation/screens/member_profile_screen.dart';
 import 'package:fitkle/features/profile/presentation/screens/settings_screen.dart';
